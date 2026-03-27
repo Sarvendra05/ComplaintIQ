@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Login to ComplaintIQ - Access your complaint dashboard">
+    <title>Login - ComplaintIQ</title>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <nav class="navbar" id="navbar"></nav>
+
+    <div class="page-content">
+        <div class="auth-container">
+            <div class="auth-card">
+                <h2>Welcome Back</h2>
+                <p class="auth-subtitle">Sign in to your account</p>
+
+                <div class="role-selector">
+                    <button class="role-btn active" data-role="citizen" onclick="selectRole('citizen')">
+                        <i class="ph ph-user"></i> Citizen
+                    </button>
+                    <button class="role-btn" data-role="admin" onclick="selectRole('admin')">
+                        <i class="ph ph-shield-check"></i> Admin
+                    </button>
+                    <button class="role-btn" data-role="department" onclick="selectRole('department')">
+                        <i class="ph ph-buildings"></i> Department
+                    </button>
+                </div>
+
+                <form id="loginForm" onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label class="form-label" id="usernameLabel">Email</label>
+                        <input type="text" class="form-control" id="username" placeholder="Enter your email" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" placeholder="Enter your password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width:100%; margin-top:8px;" id="loginBtn">
+                        Sign In
+                    </button>
+                </form>
+
+                <div class="auth-footer" id="authFooter">
+                    Don't have an account? <a href="/register.html">Register here</a>
+                </div>
+
+                <div style="margin-top:24px; padding-top:20px; border-top:1px solid var(--border);">
+                    <p style="color:var(--text-muted); font-size:0.8rem; text-align:center; margin-bottom:12px;">Demo Credentials</p>
+                    <div style="display:grid; gap:8px; font-size:0.8rem; color:var(--text-secondary);">
+                        <div style="display:flex; justify-content:space-between; padding:6px 10px; background:var(--bg-primary); border-radius:6px;">
+                            <span>Citizen:</span> <span>aarav@example.com / citizen123</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; padding:6px 10px; background:var(--bg-primary); border-radius:6px;">
+                            <span>Admin:</span> <span>admin / admin123</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; padding:6px 10px; background:var(--bg-primary); border-radius:6px;">
+                            <span>Dept:</span> <span>road_officer / officer123</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        let selectedRole = 'citizen';
+
+        function selectRole(role) {
+            selectedRole = role;
+            document.querySelectorAll('.role-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.role === role);
+            });
+
+            const label = document.getElementById('usernameLabel');
+            const input = document.getElementById('username');
+            const footer = document.getElementById('authFooter');
+            
+            if (role === 'citizen') {
+                label.textContent = 'Email';
+                input.placeholder = 'Enter your email';
+                input.type = 'email';
+                footer.style.display = 'block';
+            } else {
+                label.textContent = 'Username';
+                input.placeholder = 'Enter your username';
+                input.type = 'text';
+                footer.style.display = 'none';
+            }
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const btn = document.getElementById('loginBtn');
+            btn.disabled = true;
+            btn.textContent = 'Signing in...';
+
+            try {
+                const data = await apiRequest('/auth/login', {
+                    method: 'POST',
+                    body: {
+                        username: document.getElementById('username').value,
+                        password: document.getElementById('password').value,
+                        role: selectedRole
+                    }
+                });
+
+                if (data) {
+                    setAuth(data.token, { 
+                        role: data.role, 
+                        name: data.name,
+                        dept_name: data.dept_name || null
+                    });
+                    showToast('Login successful!', 'success');
+                    
+                    setTimeout(() => {
+                        if (data.role === 'citizen') window.location.href = '/my-complaints.html';
+                        else if (data.role === 'admin') window.location.href = '/admin-dashboard.html';
+                        else if (data.role === 'department') window.location.href = '/dept-dashboard.html';
+                    }, 500);
+                }
+            } catch (err) {
+                showToast(err.message || 'Login failed', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Sign In';
+            }
+        }
+    </script>
+</body>
+</html>

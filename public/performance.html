@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Report - ComplaintIQ</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <nav class="navbar" id="navbar"></nav>
+
+    <div class="page-content">
+        <div class="container">
+            <div class="page-header">
+                <h1 class="page-title">📈 Performance Report</h1>
+                <p class="page-subtitle">Department rankings, resolution times, and complaint analytics</p>
+            </div>
+
+            <!-- Overview Stats -->
+            <div class="grid-3" style="margin-bottom:24px;" id="overviewStats">
+                <div class="stat-card success">
+                    <div class="stat-icon">🏆</div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="topDept">—</div>
+                        <div class="stat-label">Top Department</div>
+                    </div>
+                </div>
+                <div class="stat-card info">
+                    <div class="stat-icon">⏱️</div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="avgResolution">—</div>
+                        <div class="stat-label">Avg Resolution (hrs)</div>
+                    </div>
+                </div>
+                <div class="stat-card accent">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="totalResolved">—</div>
+                        <div class="stat-label">Total Resolved</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="chart-row">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">🏅 Department Rankings</span>
+                    </div>
+                    <div class="chart-container" style="height:350px;">
+                        <canvas id="rankingChart"></canvas>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">⏱️ Avg Resolution Time (hours)</span>
+                    </div>
+                    <div class="chart-container" style="height:350px;">
+                        <canvas id="resolutionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Table -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">📋 Department Performance Details</span>
+                </div>
+                <div id="performanceTable">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container"><p>© 2026 ComplaintIQ</p></div>
+    </footer>
+
+    <script src="/js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!requireAuth(['admin'])) return;
+            loadPerformanceData();
+        });
+
+        async function loadPerformanceData() {
+            try {
+                const data = await apiRequest('/admin/performance');
+                renderOverview(data);
+                renderRankingChart(data);
+                renderResolutionChart(data);
+                renderPerformanceTable(data);
+            } catch (err) {
+                showToast('Failed to load performance data', 'error');
+            }
+        }
+
+        function renderOverview(data) {
+            const withResolved = data.filter(d => d.resolved_count > 0);
+            if (withResolved.length > 0) {
+                const top = withResolved.sort((a, b) => b.resolved_count - a.resolved_count)[0];
+                document.getElementById('topDept').textContent = top.dept_name.split(' ')[0];
+            }
+            
+            const avgTimes = data.filter(d => d.avg_resolution_hours != null);
+            if (avgTimes.length > 0) {
+                const avg = avgTimes.reduce((s, d) => s + parseFloat(d.avg_resolution_hours), 0) / avgTimes.length;
+                document.getElementById('avgResolution').textContent = avg.toFixed(1);
+            }
+
+            const totalResolved = data.reduce((s, d) => s + d.resolved_count, 0);
+            document.getElementById('totalResolved').textContent = totalResolved;
+        }
+
+        function renderRankingChart(data) {
+            const sorted = [...data].sort((a, b) => b.resolved_count - a.resolved_count);
+            const ctx = document.getElementById('rankingChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sorted.map(d => d.dept_name.substring(0, 18)),
+                    datasets: [
+                        {
+                            label: 'Resolved',
+                            data: sorted.map(d => d.resolved_count),
+                            backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Pending',
+                            data: sorted.map(d => d.pending_count),
+                            backgroundColor: 'rgba(245, 158, 11, 0.8)',
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Escalated',
+                            data: sorted.map(d => d.escalated_count),
+                            backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#94a3b8', usePointStyle: true, padding: 16 }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            stacked: true,
+                            ticks: { color: '#94a3b8', stepSize: 1 },
+                            grid: { color: 'rgba(148, 163, 184, 0.08)' }
+                        },
+                        x: {
+                            stacked: true,
+                            ticks: { color: '#94a3b8', font: { size: 10 } },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderResolutionChart(data) {
+            const withTime = data.filter(d => d.avg_resolution_hours != null);
+            const ctx = document.getElementById('resolutionChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: withTime.map(d => d.dept_name.substring(0, 18)),
+                    datasets: [{
+                        label: 'Avg Hours',
+                        data: withTime.map(d => parseFloat(d.avg_resolution_hours)),
+                        backgroundColor: withTime.map(d => {
+                            const h = parseFloat(d.avg_resolution_hours);
+                            if (h <= 24) return 'rgba(16, 185, 129, 0.8)';
+                            if (h <= 48) return 'rgba(245, 158, 11, 0.8)';
+                            return 'rgba(239, 68, 68, 0.8)';
+                        }),
+                        borderRadius: 6,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.08)' }
+                        },
+                        y: {
+                            ticks: { color: '#94a3b8', font: { size: 11 } },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderPerformanceTable(data) {
+            const sorted = [...data].sort((a, b) => b.resolved_count - a.resolved_count);
+            const container = document.getElementById('performanceTable');
+            container.innerHTML = `
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Department</th>
+                                <th>Total Assigned</th>
+                                <th>Resolved</th>
+                                <th>In Progress</th>
+                                <th>Pending</th>
+                                <th>Escalated</th>
+                                <th>Avg Resolution</th>
+                                <th>Efficiency</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${sorted.map((d, i) => {
+                                const rate = d.total_assigned > 0 ? Math.round((d.resolved_count / d.total_assigned) * 100) : 0;
+                                return `
+                                <tr>
+                                    <td>
+                                        <span style="display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:50%; font-weight:700; font-size:0.85rem;
+                                            background:${i === 0 ? 'linear-gradient(135deg, #fbbf24, #f59e0b)' : i === 1 ? 'linear-gradient(135deg, #94a3b8, #64748b)' : i === 2 ? 'linear-gradient(135deg, #d97706, #b45309)' : 'var(--bg-tertiary)'}; 
+                                            color:${i < 3 ? '#fff' : 'var(--text-secondary)'};">
+                                            ${i + 1}
+                                        </span>
+                                    </td>
+                                    <td><strong>${d.dept_name}</strong></td>
+                                    <td>${d.total_assigned}</td>
+                                    <td style="color:var(--success); font-weight:600;">${d.resolved_count}</td>
+                                    <td style="color:var(--info);">${d.in_progress_count}</td>
+                                    <td style="color:var(--warning);">${d.pending_count}</td>
+                                    <td style="color:var(--danger);">${d.escalated_count}</td>
+                                    <td>
+                                        ${d.avg_resolution_hours !== null
+                                            ? `<span style="font-weight:600; color:${parseFloat(d.avg_resolution_hours) <= 24 ? 'var(--success)' : parseFloat(d.avg_resolution_hours) <= 48 ? 'var(--warning)' : 'var(--danger)'};">${d.avg_resolution_hours}h</span>`
+                                            : '<span style="color:var(--text-muted);">—</span>'}
+                                    </td>
+                                    <td>
+                                        <div style="display:flex; align-items:center; gap:8px;">
+                                            <div style="flex:1; height:6px; background:var(--bg-tertiary); border-radius:3px; overflow:hidden; min-width:60px;">
+                                                <div style="width:${rate}%; height:100%; background:${rate >= 60 ? 'var(--success)' : rate >= 30 ? 'var(--warning)' : 'var(--danger)'}; border-radius:3px;"></div>
+                                            </div>
+                                            <span style="font-size:0.8rem; font-weight:700; color:var(--text-secondary);min-width:35px;">${rate}%</span>
+                                        </div>
+                                    </td>
+                                </tr>`;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotspot Detection - ComplaintIQ</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <nav class="navbar" id="navbar"></nav>
+
+    <div class="page-content">
+        <div class="container">
+            <div class="page-header">
+                <h1 class="page-title">🗺️ Hotspot Detection</h1>
+                <p class="page-subtitle">Identify recurring problem areas, category frequency, and complaint trends</p>
+            </div>
+
+            <!-- Hotspot Area Rankings -->
+            <div class="chart-row">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">🔥 Top Problem Zones</span>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="hotspotChart"></canvas>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">📊 Category Frequency</span>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monthly Trend -->
+            <div class="card" style="margin-bottom:24px;">
+                <div class="card-header">
+                    <span class="card-title">📈 Monthly Complaint Trend</span>
+                </div>
+                <div class="chart-container" style="height:350px;">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Hotspot Table -->
+            <div class="card" style="margin-bottom:24px;">
+                <div class="card-header">
+                    <span class="card-title">🏆 Area Complaint Rankings</span>
+                </div>
+                <div id="hotspotTable">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+
+            <!-- Category Breakdown Table -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">📋 Category Breakdown</span>
+                </div>
+                <div id="categoryTable">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container"><p>© 2026 ComplaintIQ</p></div>
+    </footer>
+
+    <script src="/js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!requireAuth(['admin'])) return;
+            loadHotspotData();
+        });
+
+        async function loadHotspotData() {
+            try {
+                const data = await apiRequest('/admin/hotspots');
+                renderHotspotChart(data.hotspot_areas);
+                renderCategoryChart(data.category_frequency);
+                renderTrendChart(data.monthly_trend);
+                renderHotspotTable(data.hotspot_areas);
+                renderCategoryTable(data.category_frequency);
+            } catch (err) {
+                showToast('Failed to load hotspot data', 'error');
+            }
+        }
+
+        function renderHotspotChart(areas) {
+            const ctx = document.getElementById('hotspotChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: areas.map(a => a.area_name.replace('Zone ', '').substring(0, 20)),
+                    datasets: [{
+                        label: 'Complaints',
+                        data: areas.map(a => a.complaint_count),
+                        backgroundColor: areas.map((_, i) => {
+                            const colors = [
+                                'rgba(239, 68, 68, 0.8)',
+                                'rgba(249, 115, 22, 0.8)',
+                                'rgba(245, 158, 11, 0.8)',
+                                'rgba(99, 102, 241, 0.8)',
+                                'rgba(6, 182, 212, 0.8)',
+                                'rgba(16, 185, 129, 0.8)',
+                                'rgba(139, 92, 246, 0.7)',
+                                'rgba(236, 72, 153, 0.7)',
+                                'rgba(34, 197, 94, 0.7)',
+                                'rgba(59, 130, 246, 0.7)',
+                                'rgba(168, 85, 247, 0.7)',
+                                'rgba(251, 146, 60, 0.7)'
+                            ];
+                            return colors[i % colors.length];
+                        }),
+                        borderRadius: 6,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#94a3b8', stepSize: 1 },
+                            grid: { color: 'rgba(148, 163, 184, 0.08)' }
+                        },
+                        x: {
+                            ticks: { color: '#94a3b8', font: { size: 11 } },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderCategoryChart(categories) {
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            const catColors = {
+                'Road': '#ef4444',
+                'Water': '#3b82f6',
+                'Garbage': '#f59e0b',
+                'Light': '#f97316',
+                'Drainage': '#06b6d4',
+                'Other': '#8b5cf6'
+            };
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: categories.map(c => c.category),
+                    datasets: [{
+                        data: categories.map(c => c.total_complaints),
+                        backgroundColor: categories.map(c => catColors[c.category] || '#6366f1'),
+                        borderWidth: 0,
+                        hoverOffset: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '60%',
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                color: '#94a3b8',
+                                padding: 16,
+                                usePointStyle: true,
+                                pointStyleWidth: 10,
+                                font: { size: 12 }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderTrendChart(trend) {
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            const reversed = [...trend].reverse();
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: reversed.map(t => t.month),
+                    datasets: [
+                        {
+                            label: 'Total Complaints',
+                            data: reversed.map(t => t.total_complaints),
+                            borderColor: '#6366f1',
+                            backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 6,
+                            pointHoverRadius: 8,
+                            pointBackgroundColor: '#6366f1'
+                        },
+                        {
+                            label: 'Resolved',
+                            data: reversed.map(t => t.resolved),
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.08)',
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 5,
+                            pointHoverRadius: 7,
+                            pointBackgroundColor: '#10b981'
+                        },
+                        {
+                            label: 'Pending',
+                            data: reversed.map(t => t.pending),
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.08)',
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 5,
+                            pointHoverRadius: 7,
+                            pointBackgroundColor: '#f59e0b'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: '#94a3b8', usePointStyle: true, padding: 20 }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#94a3b8', stepSize: 1 },
+                            grid: { color: 'rgba(148, 163, 184, 0.08)' }
+                        },
+                        x: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderHotspotTable(areas) {
+            const container = document.getElementById('hotspotTable');
+            container.innerHTML = `
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Area</th>
+                                <th>Total Complaints</th>
+                                <th>Severity</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${areas.map((a, i) => `
+                                <tr>
+                                    <td>
+                                        <span style="display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; background:${i < 3 ? 'var(--danger-bg)' : 'var(--bg-tertiary)'}; color:${i < 3 ? 'var(--danger)' : 'var(--text-secondary)'}; font-weight:700; font-size:0.8rem;">
+                                            ${i + 1}
+                                        </span>
+                                    </td>
+                                    <td><strong>${a.area_name}</strong></td>
+                                    <td>${a.complaint_count}</td>
+                                    <td>
+                                        ${a.complaint_count >= 5 ? '<span class="badge badge-escalated">Critical</span>' :
+                                          a.complaint_count >= 3 ? '<span class="badge badge-pending">Warning</span>' :
+                                          '<span class="badge badge-resolved">Normal</span>'}
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function renderCategoryTable(categories) {
+            const container = document.getElementById('categoryTable');
+            container.innerHTML = `
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Total</th>
+                                <th>Resolved</th>
+                                <th>Pending</th>
+                                <th>Escalated</th>
+                                <th>Resolution Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${categories.map(c => {
+                                const rate = c.total_complaints > 0 ? Math.round((c.resolved / c.total_complaints) * 100) : 0;
+                                return `
+                                <tr>
+                                    <td><span class="badge badge-category">${c.category}</span></td>
+                                    <td><strong>${c.total_complaints}</strong></td>
+                                    <td style="color:var(--success)">${c.resolved}</td>
+                                    <td style="color:var(--warning)">${c.pending}</td>
+                                    <td style="color:var(--danger)">${c.escalated}</td>
+                                    <td>
+                                        <div style="display:flex; align-items:center; gap:8px;">
+                                            <div style="flex:1; height:6px; background:var(--bg-tertiary); border-radius:3px; overflow:hidden;">
+                                                <div style="width:${rate}%; height:100%; background:${rate >= 60 ? 'var(--success)' : rate >= 30 ? 'var(--warning)' : 'var(--danger)'}; border-radius:3px;"></div>
+                                            </div>
+                                            <span style="font-size:0.85rem; font-weight:600; color:var(--text-secondary);">${rate}%</span>
+                                        </div>
+                                    </td>
+                                </tr>`;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

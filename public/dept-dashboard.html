@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Department Dashboard - ComplaintIQ</title>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <nav class="navbar" id="navbar"></nav>
+
+    <div class="page-content">
+        <div class="container">
+            <div class="page-header">
+                <h1 class="page-title"><i class="ph-fill ph-buildings" style="color:var(--primary);"></i> Department Dashboard</h1>
+                <p class="page-subtitle" id="deptSubtitle">Manage assigned complaints</p>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="grid-4" style="margin-bottom:24px;" id="deptStats">
+                <div class="stat-card primary">
+                    <div class="stat-icon"><i class="ph ph-clipboard-text"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="statTotal">—</div>
+                        <div class="stat-label">Total Assigned</div>
+                    </div>
+                </div>
+                <div class="stat-card warning">
+                    <div class="stat-icon"><i class="ph ph-hourglass-high"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="statPending">—</div>
+                        <div class="stat-label">Pending</div>
+                    </div>
+                </div>
+                <div class="stat-card info">
+                    <div class="stat-icon"><i class="ph ph-arrows-clockwise"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="statProgress">—</div>
+                        <div class="stat-label">In Progress</div>
+                    </div>
+                </div>
+                <div class="stat-card success">
+                    <div class="stat-icon"><i class="ph ph-check-circle"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="statResolved">—</div>
+                        <div class="stat-label">Resolved</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter -->
+            <div class="filters-bar">
+                <select class="form-control" id="filterStatus">
+                    <option value="">All Status</option>
+                    <option value="Pending">Pending</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Resolved">Resolved</option>
+                    <option value="Escalated">Escalated</option>
+                </select>
+                <button class="btn btn-primary" onclick="loadComplaints()">Filter</button>
+            </div>
+
+            <!-- Complaints -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Assigned Complaints</span>
+                </div>
+                <div id="complaintsContainer">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Update Status Modal -->
+    <div class="modal-overlay" id="updateModal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">Update Complaint Status</span>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <p style="color:var(--text-secondary); margin-bottom:16px;">
+                Complaint: <strong id="modalComplaintTitle"></strong>
+            </p>
+            <div class="form-group">
+                <label class="form-label">New Status</label>
+                <select class="form-control" id="newStatus">
+                    <option value="In Progress">In Progress</option>
+                    <option value="Resolved">Resolved</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Resolution Note (optional)</label>
+                <textarea class="form-control" id="resolutionNote" placeholder="Add details about the resolution..." rows="3"></textarea>
+            </div>
+            <div style="display:flex; gap:12px; justify-content:flex-end;">
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-success" onclick="updateStatus()">Update Status</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container"><p>© 2026 ComplaintIQ</p></div>
+    </footer>
+
+    <script src="/js/app.js"></script>
+    <script>
+        let currentComplaintId = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!requireAuth(['department'])) return;
+            const user = getUser();
+            document.getElementById('deptSubtitle').textContent = `${user.dept_name || 'Department'} — Manage assigned complaints`;
+            loadStats();
+            loadComplaints();
+        });
+
+        async function loadStats() {
+            try {
+                const stats = await apiRequest('/dept/stats');
+                document.getElementById('statTotal').textContent = stats.total;
+                document.getElementById('statPending').textContent = stats.pending;
+                document.getElementById('statProgress').textContent = stats.in_progress;
+                document.getElementById('statResolved').textContent = stats.resolved;
+            } catch (err) {
+                console.error('Failed to load stats:', err);
+            }
+        }
+
+        async function loadComplaints() {
+            try {
+                const status = document.getElementById('filterStatus').value;
+                const params = status ? `?status=${status}` : '';
+                const complaints = await apiRequest(`/dept/complaints${params}`);
+                const container = document.getElementById('complaintsContainer');
+
+                if (!complaints || complaints.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="ph ph-tray"></i></div>
+                            <p>No complaints assigned to your department</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = `
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Title</th>
+                                    <th>Citizen</th>
+                                    <th>Category</th>
+                                    <th>Area</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${complaints.map(c => `
+                                    <tr>
+                                        <td>#${c.complaint_id}</td>
+                                        <td style="max-width:200px;">${c.title}</td>
+                                        <td>${c.citizen_name}</td>
+                                        <td><span class="badge badge-category">${c.category}</span></td>
+                                        <td>${c.area_name}</td>
+                                        <td>${getPriorityBadge(c.priority)}</td>
+                                        <td>${getStatusBadge(c.status)}</td>
+                                        <td>${formatDate(c.date)}</td>
+                                        <td>
+                                            ${c.status !== 'Resolved' ? `<button class="btn btn-primary btn-sm" onclick="openUpdateModal(${c.complaint_id}, '${c.title.replace(/'/g, "\\'")}')">Update</button>` : '<span style="color:var(--success)">✓ Done</span>'}
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            } catch (err) {
+                showToast('Failed to load complaints', 'error');
+            }
+        }
+
+        function openUpdateModal(complaintId, title) {
+            currentComplaintId = complaintId;
+            document.getElementById('modalComplaintTitle').textContent = title;
+            document.getElementById('newStatus').value = 'In Progress';
+            document.getElementById('resolutionNote').value = '';
+            document.getElementById('updateModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('updateModal').classList.remove('active');
+            currentComplaintId = null;
+        }
+
+        async function updateStatus() {
+            const status = document.getElementById('newStatus').value;
+            const note = document.getElementById('resolutionNote').value;
+
+            try {
+                await apiRequest('/dept/update-status', {
+                    method: 'PUT',
+                    body: {
+                        complaint_id: currentComplaintId,
+                        status,
+                        resolution_note: note || undefined
+                    }
+                });
+                showToast('Status updated successfully!', 'success');
+                closeModal();
+                loadComplaints();
+                loadStats();
+            } catch (err) {
+                showToast(err.message || 'Failed to update status', 'error');
+            }
+        }
+    </script>
+</body>
+</html>

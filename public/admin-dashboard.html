@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - ComplaintIQ</title>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <nav class="navbar" id="navbar"></nav>
+
+    <div class="page-content">
+        <div class="container">
+            <div class="page-header">
+                <h1 class="page-title"><i class="ph-fill ph-shield-check" style="color:var(--primary);"></i> Admin Dashboard</h1>
+                <p class="page-subtitle">Manage complaints, assign departments, and view analytics</p>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="grid-4" id="statsGrid" style="margin-bottom:24px;">
+                <div class="stat-card primary">
+                    <div class="stat-icon"><i class="ph ph-clipboard-text"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="statTotal">—</div>
+                        <div class="stat-label">Total Complaints</div>
+                    </div>
+                </div>
+                <div class="stat-card warning">
+                    <div class="stat-icon"><i class="ph ph-hourglass-high"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="statPending">—</div>
+                        <div class="stat-label">Pending</div>
+                    </div>
+                </div>
+                <div class="stat-card success">
+                    <div class="stat-icon"><i class="ph ph-check-circle"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="statResolved">—</div>
+                        <div class="stat-label">Resolved</div>
+                    </div>
+                </div>
+                <div class="stat-card danger">
+                    <div class="stat-icon"><i class="ph ph-warning-circle"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="statEscalated">—</div>
+                        <div class="stat-label">Escalated</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="grid-2" style="margin-bottom:24px;">
+                <a href="/hotspots.html" class="card" style="text-decoration:none; display:flex; align-items:center; gap:16px;">
+                    <div style="font-size:3rem; color:var(--primary-light); line-height:1;"><i class="ph ph-map-trifold"></i></div>
+                    <div>
+                        <h3 style="margin-bottom:4px;">Hotspot Detection</h3>
+                        <p style="color:var(--text-secondary); font-size:0.9rem;">View areas with highest complaints and trends</p>
+                    </div>
+                </a>
+                <a href="/performance.html" class="card" style="text-decoration:none; display:flex; align-items:center; gap:16px;">
+                    <div style="font-size:3rem; color:var(--success); line-height:1;"><i class="ph ph-trend-up"></i></div>
+                    <div>
+                        <h3 style="margin-bottom:4px;">Performance Report</h3>
+                        <p style="color:var(--text-secondary); font-size:0.9rem;">Department rankings and resolution analytics</p>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Filters -->
+            <div class="filters-bar">
+                <input type="text" class="form-control" id="filterSearch" placeholder="Search complaints...">
+                <select class="form-control" id="filterArea">
+                    <option value="">All Areas</option>
+                </select>
+                <select class="form-control" id="filterCategory">
+                    <option value="">All Categories</option>
+                    <option value="Road">Road</option>
+                    <option value="Water">Water</option>
+                    <option value="Garbage">Garbage</option>
+                    <option value="Light">Light</option>
+                    <option value="Drainage">Drainage</option>
+                    <option value="Other">Other</option>
+                </select>
+                <select class="form-control" id="filterStatus">
+                    <option value="">All Status</option>
+                    <option value="Pending">Pending</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Resolved">Resolved</option>
+                    <option value="Escalated">Escalated</option>
+                </select>
+                <button class="btn btn-primary" onclick="loadComplaints()">Filter</button>
+                <button class="btn btn-secondary" onclick="clearFilters()">Clear</button>
+            </div>
+
+            <!-- Complaints Table -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">All Complaints</span>
+                    <span class="badge badge-category" id="complaintCount">0 results</span>
+                </div>
+                <div id="complaintsContainer">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assign Department Modal -->
+    <div class="modal-overlay" id="assignModal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">Assign Department</span>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <p style="color:var(--text-secondary); margin-bottom:16px;">
+                Complaint: <strong id="modalComplaintTitle"></strong>
+            </p>
+            <div class="form-group">
+                <label class="form-label">Select Department</label>
+                <select class="form-control" id="assignDeptId">
+                    <option value="">Loading departments...</option>
+                </select>
+            </div>
+            <div style="display:flex; gap:12px; justify-content:flex-end;">
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="assignDepartment()">Assign</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container"><p>© 2026 ComplaintIQ</p></div>
+    </footer>
+
+    <script src="/js/app.js"></script>
+    <script>
+        let departments = [];
+        let currentComplaintId = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!requireAuth(['admin'])) return;
+            loadStats();
+            loadComplaints();
+            loadAreas('filterArea');
+            loadDepartments();
+        });
+
+        async function loadStats() {
+            try {
+                const stats = await apiRequest('/admin/stats');
+                document.getElementById('statTotal').textContent = stats.total;
+                document.getElementById('statPending').textContent = stats.pending;
+                document.getElementById('statResolved').textContent = stats.resolved;
+                document.getElementById('statEscalated').textContent = stats.escalated;
+            } catch (err) {
+                console.error('Failed to load stats:', err);
+            }
+        }
+
+        async function loadDepartments() {
+            try {
+                departments = await apiRequest('/admin/departments');
+                const select = document.getElementById('assignDeptId');
+                select.innerHTML = '<option value="">Select Department</option>';
+                departments.forEach(d => {
+                    select.innerHTML += `<option value="${d.dept_id}">${d.dept_name}</option>`;
+                });
+            } catch (err) {
+                console.error('Failed to load departments:', err);
+            }
+        }
+
+        async function loadComplaints() {
+            try {
+                const params = new URLSearchParams();
+                const search = document.getElementById('filterSearch').value;
+                const area = document.getElementById('filterArea').value;
+                const category = document.getElementById('filterCategory').value;
+                const status = document.getElementById('filterStatus').value;
+
+                if (search) params.set('search', search);
+                if (area) params.set('area_id', area);
+                if (category) params.set('category', category);
+                if (status) params.set('status', status);
+
+                const complaints = await apiRequest(`/admin/complaints?${params.toString()}`);
+                const container = document.getElementById('complaintsContainer');
+                document.getElementById('complaintCount').textContent = `${complaints.length} results`;
+
+                if (!complaints || complaints.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="ph ph-tray"></i></div>
+                            <p>No complaints found matching filters</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = `
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Title</th>
+                                    <th>Citizen</th>
+                                    <th>Category</th>
+                                    <th>Area</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Dept</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${complaints.map(c => `
+                                    <tr>
+                                        <td>#${c.complaint_id}</td>
+                                        <td style="max-width:180px;">${c.title}</td>
+                                        <td>${c.citizen_name}</td>
+                                        <td><span class="badge badge-category">${c.category}</span></td>
+                                        <td>${c.area_name}</td>
+                                        <td>${getPriorityBadge(c.priority)}</td>
+                                        <td>${getStatusBadge(c.status)}</td>
+                                        <td>${formatDate(c.date)}</td>
+                                        <td>${c.dept_name || '<span style="color:var(--text-muted)">—</span>'}</td>
+                                        <td>
+                                            ${!c.dept_id ? `<button class="btn btn-primary btn-sm" onclick="openAssignModal(${c.complaint_id}, '${c.title.replace(/'/g, "\\'")}')">Assign</button>` : ''}
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            } catch (err) {
+                showToast('Failed to load complaints', 'error');
+            }
+        }
+
+        function clearFilters() {
+            document.getElementById('filterSearch').value = '';
+            document.getElementById('filterArea').value = '';
+            document.getElementById('filterCategory').value = '';
+            document.getElementById('filterStatus').value = '';
+            loadComplaints();
+        }
+
+        function openAssignModal(complaintId, title) {
+            currentComplaintId = complaintId;
+            document.getElementById('modalComplaintTitle').textContent = title;
+            document.getElementById('assignModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('assignModal').classList.remove('active');
+            currentComplaintId = null;
+        }
+
+        async function assignDepartment() {
+            const deptId = document.getElementById('assignDeptId').value;
+            if (!deptId) {
+                showToast('Please select a department', 'warning');
+                return;
+            }
+
+            try {
+                await apiRequest('/admin/assign', {
+                    method: 'PUT',
+                    body: { complaint_id: currentComplaintId, dept_id: parseInt(deptId) }
+                });
+                showToast('Department assigned successfully!', 'success');
+                closeModal();
+                loadComplaints();
+                loadStats();
+            } catch (err) {
+                showToast(err.message || 'Failed to assign department', 'error');
+            }
+        }
+    </script>
+</body>
+</html>
