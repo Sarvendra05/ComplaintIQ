@@ -420,6 +420,7 @@ a:hover {
    ============================================ */
 .form-group {
     margin-bottom: 20px;
+    appearance: none;
 }
 
 .form-label {
@@ -442,12 +443,14 @@ a:hover {
     font-family: inherit;
     font-size: 0.95rem;
     transition: var(--transition);
+    appearance: none;
 }
 
 .form-control:focus {
     outline: none;
     border-color: var(--primary);
     box-shadow: 0 0 0 3px var(--primary-glow);
+    appearance: none;
 }
 
 .form-control::placeholder {
@@ -473,6 +476,122 @@ textarea.form-control {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
+}
+
+/* ============================================
+   PROOF IMAGES & THUMBNAILS
+   ============================================ */
+.proof-comparison-container {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+}
+
+.proof-scroll-container {
+    display: flex;
+    overflow-x: auto;
+    gap: 12px;
+    padding: 10px 0;
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary) transparent;
+}
+
+.proof-scroll-container::-webkit-scrollbar {
+    height: 6px;
+}
+
+.proof-scroll-container::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 10px;
+}
+
+.proof-thumbnail-item {
+    flex: 0 0 auto;
+    text-align: center;
+}
+
+.proof-item-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    display: block;
+}
+
+.label-old { color: var(--text-muted); }
+.label-updated { color: var(--primary-light); }
+
+.proof-thumbnail-wrapper {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    margin: 0 auto;
+}
+
+.proof-thumbnail {
+    width: 120px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    transition: var(--transition);
+}
+
+.proof-thumbnail:hover {
+    transform: scale(1.05);
+    cursor: pointer;
+    border-color: var(--primary);
+    box-shadow: 0 0 15px var(--primary-glow);
+}
+
+.proof-tag {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    padding: 2px 6px;
+    font-size: 0.6rem;
+    font-weight: bold;
+    border-radius: 4px;
+    text-transform: uppercase;
+    z-index: 2;
+}
+
+.tag-old { 
+    background: var(--bg-tertiary); 
+    color: var(--text-secondary); 
+    border: 1px solid var(--border); 
+}
+
+.tag-new { 
+    background: var(--primary); 
+    color: white; 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3); 
+}
+
+.btn-remove-new {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    width: 20px;
+    height: 20px;
+    background: var(--danger);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: 2px solid var(--bg-primary);
+    font-size: 12px;
+    transition: var(--transition);
+    z-index: 3;
+}
+
+.btn-remove-new:hover { 
+    background: #dc2626; 
+    transform: scale(1.1);
 }
 
 /* ============================================
@@ -1139,4 +1258,81 @@ tr:hover td {
     .stat-value {
         font-size: 1.4rem;
     }
+}
+/* ============================================
+   REMOVE PHOTO UI IMPROVEMENTS
+   ============================================ */
+.btn-remove-photo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    padding: 6px;
+    text-decoration: none !important;
+}
+
+.btn-remove-photo:hover {
+    background: var(--danger-bg);
+    color: var(--danger);
+    border-color: rgba(239, 68, 68, 0.3);
+    transform: scale(1.15) rotate(-5deg);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+.btn-remove-photo svg {
+    width: 100%;
+    height: 100%;
+}
+
+.btn-remove-photo-modal {
+    padding: 10px 20px;
+    gap: 10px;
+    transition: all 0.3s ease;
+}
+
+.btn-remove-photo-modal:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(239, 68, 68, 0.3);
+}
+
+.fade-out-item {
+    opacity: 0 !important;
+    transform: scale(0.9) translateY(20px) !important;
+    pointer-events: none;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+[data-tooltip] {
+    position: relative;
+}
+
+[data-tooltip]::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-8px);
+    padding: 6px 10px;
+    background: #000;
+    color: #fff;
+    font-size: 0.75rem;
+    border-radius: 4px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+[data-tooltip]:hover::before {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(-4px);
 }

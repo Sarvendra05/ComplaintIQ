@@ -2,7 +2,7 @@
 -- Views, Stored Procedures, and Triggers
 -- ============================================
 
-USE complaint_system;
+
 
 -- ============================================
 -- VIEW: Hotspot Areas (complaint count per area)
@@ -92,7 +92,7 @@ END //
 DELIMITER ;
 
 -- ============================================
--- EVENT: Auto Escalate (runs daily)
+-- EVENT: Auto Escalate (runs frequently)
 -- ============================================
 -- Note: MySQL EVENT SCHEDULER must be enabled:
 -- SET GLOBAL event_scheduler = ON;
@@ -100,22 +100,37 @@ DELIMITER ;
 DROP EVENT IF EXISTS evt_auto_escalate;
 DELIMITER //
 CREATE EVENT evt_auto_escalate
-ON SCHEDULE EVERY 1 DAY
+ON SCHEDULE EVERY 1 MINUTE
 STARTS CURRENT_TIMESTAMP
 DO
 BEGIN
-    -- Escalate complaints not resolved within 3 days
+    -- Log unassigned pending complaints getting escalated
+    INSERT INTO audit_log (complaint_id, action, action_date)
+    SELECT complaint_id, 'Auto-escalated: pending for 3+ days', NOW()
+    FROM complaint
+    WHERE status = 'Pending' AND dept_id IS NULL
+    AND TIMESTAMPDIFF(DAY, date, NOW()) >= 3;
+
+    -- Update pending complaints
     UPDATE complaint 
     SET status = 'Escalated'
-    WHERE status IN ('Pending', 'In Progress')
-    AND TIMESTAMPDIFF(DAY, date, NOW()) > 3;
+    WHERE status = 'Pending' AND dept_id IS NULL
+    AND TIMESTAMPDIFF(DAY, date, NOW()) >= 3;
     
-    -- Log the escalation
+    -- Log assigned complaints getting returned to Admin
     INSERT INTO audit_log (complaint_id, action, action_date)
-    SELECT complaint_id, 'Auto-escalated: unresolved for 3+ days', NOW()
+    SELECT complaint_id, 'Auto-escalated: unresolved for 3 days by dept, returned to admin', NOW()
     FROM complaint
-    WHERE status = 'Escalated'
-    AND TIMESTAMPDIFF(DAY, date, NOW()) BETWEEN 3 AND 4;
+    WHERE status = 'In Progress' AND dept_id IS NOT NULL 
+    AND assigned_date IS NOT NULL
+    AND TIMESTAMPDIFF(DAY, assigned_date, NOW()) >= 3;
+
+    -- Update assigned complaints (Return to Admin)
+    UPDATE complaint 
+    SET status = 'Escalated', dept_id = NULL
+    WHERE status = 'In Progress' AND dept_id IS NOT NULL
+    AND assigned_date IS NOT NULL
+    AND TIMESTAMPDIFF(DAY, assigned_date, NOW()) >= 3;
 END //
 DELIMITER ;
 

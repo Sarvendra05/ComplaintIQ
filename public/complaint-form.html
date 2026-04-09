@@ -60,6 +60,11 @@
                     </div>
 
                     <div class="form-group">
+                        <label class="form-label">Proof Image (Optional, max 2MB)</label>
+                        <input type="file" class="form-control" id="image" accept=".jpg,.jpeg,.png" style="padding: 10px;">
+                    </div>
+
+                    <div class="form-group">
                         <label class="form-label">Date</label>
                         <input type="text" class="form-control" id="dateField" disabled>
                     </div>
@@ -94,15 +99,21 @@
             btn.textContent = 'Submitting...';
 
             try {
+                const formData = new FormData();
+                formData.append('title', document.getElementById('title').value);
+                formData.append('description', document.getElementById('description').value);
+                formData.append('category', document.getElementById('category').value);
+                formData.append('area_id', document.getElementById('area_id').value);
+                formData.append('priority', document.getElementById('priority').value);
+                
+                const imageFile = document.getElementById('image').files[0];
+                if (imageFile) {
+                    formData.append('image', imageFile);
+                }
+
                 const data = await apiRequest('/complaints', {
                     method: 'POST',
-                    body: {
-                        title: document.getElementById('title').value,
-                        description: document.getElementById('description').value,
-                        category: document.getElementById('category').value,
-                        area_id: parseInt(document.getElementById('area_id').value),
-                        priority: document.getElementById('priority').value
-                    }
+                    body: formData
                 });
 
                 if (data) {

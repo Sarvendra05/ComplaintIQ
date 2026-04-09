@@ -9,8 +9,14 @@ router.post('/register', async (req, res) => {
     try {
         const { name, email, phone, area, password } = req.body;
         
-        if (!name || !email || !password) {
-            return res.status(400).json({ error: 'Name, email, and password are required.' });
+        if (!name || !email || !phone || !password) {
+            return res.status(400).json({ error: 'Name, email, phone, and password are required.' });
+        }
+
+        // Validate phone number
+        const phoneRegex = /^\d{10}$/;
+        if (!phoneRegex.test(phone)) {
+            return res.status(400).json({ error: 'Phone number must be exactly 10 digits.' });
         }
 
         // Check if email exists
@@ -22,7 +28,7 @@ router.post('/register', async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
         const [result] = await db.query(
             'INSERT INTO citizen (name, email, phone, area, password) VALUES (?, ?, ?, ?, ?)',
-            [name, email, phone || null, area || null, hashedPassword]
+            [name, email, phone, area || null, hashedPassword]
         );
 
         const token = jwt.sign(
@@ -52,7 +58,7 @@ router.post('/login', async (req, res) => {
 
         if (role === 'citizen') {
             const [rows] = await db.query('SELECT * FROM citizen WHERE email = ?', [username]);
-            if (rows.length === 0) return res.status(401).json({ error: 'Invalid credentials.' });
+            if (rows.length === 0) return res.status(401).json({ error: 'No user found with this email.' });
             user = rows[0];
             userId = user.citizen_id;
             userName = user.name;

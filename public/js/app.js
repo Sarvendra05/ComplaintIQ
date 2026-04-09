@@ -65,13 +65,25 @@ async function apiRequest(endpoint, options = {}) {
         config.headers['Authorization'] = `Bearer ${token}`;
     }
 
-    if (config.body && typeof config.body === 'object') {
+    if (options.body instanceof FormData) {
+        delete config.headers['Content-Type'];
+        config.body = options.body;
+    } else if (config.body && typeof config.body === 'object') {
         config.body = JSON.stringify(config.body);
     }
 
     try {
         const response = await fetch(url, config);
-        const data = await response.json();
+        
+        let data = null;
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            data = await response.json();
+        } else {
+            const text = await response.text();
+            // If it's HTML or some other format, package it in an error object
+            data = { error: text || `Request failed with status ${response.status}` };
+        }
 
         if (!response.ok) {
             if ((response.status === 401 || response.status === 403) && endpoint !== '/auth/login') {

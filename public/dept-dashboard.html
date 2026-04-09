@@ -100,6 +100,18 @@
             </div>
         </div>
     </div>
+    <!-- Image Modal -->
+    <div class="modal-overlay" id="imageModal" onclick="if(event.target === this) closeImageModal()">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <span class="modal-title">Proof Image</span>
+                <button class="modal-close" onclick="closeImageModal()">&times;</button>
+            </div>
+            <div style="text-align: center; margin-top: 16px;">
+                <img id="modalImage" src="" alt="Complaint Proof" style="max-width: 100%; max-height: 70vh; border-radius: var(--radius-md);">
+            </div>
+        </div>
+    </div>
 
     <footer class="footer">
         <div class="container"><p>© 2026 ComplaintIQ</p></div>
@@ -157,6 +169,7 @@
                                     <th>Category</th>
                                     <th>Area</th>
                                     <th>Priority</th>
+                                    <th>Proof</th>
                                     <th>Status</th>
                                     <th>Date</th>
                                     <th>Action</th>
@@ -171,6 +184,13 @@
                                         <td><span class="badge badge-category">${c.category}</span></td>
                                         <td>${c.area_name}</td>
                                         <td>${getPriorityBadge(c.priority)}</td>
+                                        <td>
+                                            ${c.image_path ? `
+                                                <div class="proof-thumbnail-wrapper" style="width: 40px; height: 40px;">
+                                                    <img src="${c.image_path}" class="proof-thumbnail" style="width: 40px; height: 40px; border-radius: 4px;" onclick="openImageModal('${c.image_path}')" title="View Proof">
+                                                </div>
+                                            ` : '<span style="color:var(--text-muted)">—</span>'}
+                                        </td>
                                         <td>${getStatusBadge(c.status)}</td>
                                         <td>${formatDate(c.date)}</td>
                                         <td>
@@ -220,6 +240,15 @@
             } catch (err) {
                 showToast(err.message || 'Failed to update status', 'error');
             }
+        }
+
+        function openImageModal(imagePath) {
+            document.getElementById('modalImage').src = imagePath;
+            document.getElementById('imageModal').classList.add('active');
+        }
+
+        function closeImageModal() {
+            document.getElementById('imageModal').classList.remove('active');
         }
     </script>
 </body>

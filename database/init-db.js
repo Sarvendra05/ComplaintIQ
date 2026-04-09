@@ -9,10 +9,16 @@ const mysql = require('mysql2/promise');
 const fs = require('fs');
 const path = require('path');
 
+const baseConfig = process.env.DB_HOST && process.env.DB_HOST.startsWith('mysql://')
+    ? { uri: process.env.DB_HOST }
+    : {
+        host: process.env.DB_HOST || 'localhost',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || ''
+    };
+
 const DB_CONFIG = {
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
+    ...baseConfig,
     multipleStatements: true
 };
 
@@ -38,6 +44,10 @@ async function init() {
 
         connection = await mysql.createConnection(DB_CONFIG);
         console.log('✔ Connected to MySQL.\n');
+
+        // Enable Event Scheduler
+        await connection.query('SET GLOBAL event_scheduler = ON;');
+        console.log('✔ Event scheduler enabled.');
 
         const dbDir = path.join(__dirname);
 

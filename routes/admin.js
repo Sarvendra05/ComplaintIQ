@@ -46,7 +46,7 @@ router.put('/assign', authenticateToken, authorizeRole('admin'), async (req, res
             return res.status(400).json({ error: 'complaint_id and dept_id are required.' });
         }
 
-        await db.query('UPDATE complaint SET dept_id = ?, status = "In Progress" WHERE complaint_id = ?', [dept_id, complaint_id]);
+        await db.query('UPDATE complaint SET dept_id = ?, status = "In Progress", assigned_date = CURRENT_TIMESTAMP WHERE complaint_id = ?', [dept_id, complaint_id]);
 
         res.json({ message: 'Department assigned successfully.' });
     } catch (err) {

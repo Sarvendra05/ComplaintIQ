@@ -31,8 +31,8 @@
 
                 <form id="loginForm" onsubmit="handleLogin(event)">
                     <div class="form-group">
-                        <label class="form-label" id="usernameLabel">Email</label>
-                        <input type="text" class="form-control" id="username" placeholder="Enter your email" required>
+                        <label class="form-label" id="usernameLabel">Email Address</label>
+                        <input type="email" class="form-control" id="username" placeholder="Enter your email" required maxlength="150" minlength="5" title="Please enter a valid email address">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Password</label>
@@ -80,14 +80,24 @@
             const footer = document.getElementById('authFooter');
             
             if (role === 'citizen') {
-                label.textContent = 'Email';
+                label.textContent = 'Email Address';
                 input.placeholder = 'Enter your email';
                 input.type = 'email';
+                input.removeAttribute('pattern');
+                input.maxLength = 150;
+                input.minLength = 5;
+                input.oninput = null;
+                input.title = 'Please enter a valid email address';
                 footer.style.display = 'block';
             } else {
                 label.textContent = 'Username';
                 input.placeholder = 'Enter your username';
                 input.type = 'text';
+                input.pattern = '.*';
+                input.maxLength = 100;
+                input.minLength = 1;
+                input.oninput = null;
+                input.title = '';
                 footer.style.display = 'none';
             }
         }
