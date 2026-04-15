@@ -28,7 +28,7 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Phone Number *</label>
-                        <input type="number" style="appearance: textfield; " class="form-control" id="phone" placeholder="Enter 10-digit phone number" required pattern="\d{10}" maxlength="10" title="Must be exactly 10 digits">
+                        <input type="tel" class="form-control" id="phone" placeholder="Enter phone number (max 10 digits)" required pattern="\d{1,10}" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '')" title="Phone number must be numeric and up to 10 digits">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Area</label>

@@ -13,10 +13,10 @@ router.post('/register', async (req, res) => {
             return res.status(400).json({ error: 'Name, email, phone, and password are required.' });
         }
 
-        // Validate phone number
-        const phoneRegex = /^\d{10}$/;
+        // Validate phone number (numeric and up to 11 digits)
+        const phoneRegex = /^\d{1,11}$/;
         if (!phoneRegex.test(phone)) {
-            return res.status(400).json({ error: 'Phone number must be exactly 10 digits.' });
+            return res.status(400).json({ error: 'Phone number must be numeric and up to 11 digits.' });
         }
 
         // Check if email exists
