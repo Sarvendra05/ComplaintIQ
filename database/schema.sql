@@ -3,6 +3,8 @@
 -- and Hotspot Detection System
 -- Database Schema
 -- ============================================
+CREATE DATABASE IF NOT EXISTS complaint_system;
+USE complaint_system;
 
 SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS audit_log;
