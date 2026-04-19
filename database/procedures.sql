@@ -108,13 +108,13 @@ BEGIN
     INSERT INTO audit_log (complaint_id, action, action_date)
     SELECT complaint_id, 'Auto-escalated: pending for 3+ days', NOW()
     FROM complaint
-    WHERE status = 'Pending' AND dept_id IS NULL
+    WHERE status = 'Pending'
     AND TIMESTAMPDIFF(DAY, date, NOW()) >= 3;
 
     -- Update pending complaints
     UPDATE complaint 
-    SET status = 'Escalated'
-    WHERE status = 'Pending' AND dept_id IS NULL
+    SET status = 'Escalated', dept_id = NULL
+    WHERE status = 'Pending'
     AND TIMESTAMPDIFF(DAY, date, NOW()) >= 3;
     
     -- Log assigned complaints getting returned to Admin
@@ -122,15 +122,13 @@ BEGIN
     SELECT complaint_id, 'Auto-escalated: unresolved for 3 days by dept, returned to admin', NOW()
     FROM complaint
     WHERE status = 'In Progress' AND dept_id IS NOT NULL 
-    AND assigned_date IS NOT NULL
-    AND TIMESTAMPDIFF(DAY, assigned_date, NOW()) >= 3;
+    AND TIMESTAMPDIFF(DAY, IFNULL(assigned_date, date), NOW()) >= 3;
 
     -- Update assigned complaints (Return to Admin)
     UPDATE complaint 
     SET status = 'Escalated', dept_id = NULL
     WHERE status = 'In Progress' AND dept_id IS NOT NULL
-    AND assigned_date IS NOT NULL
-    AND TIMESTAMPDIFF(DAY, assigned_date, NOW()) >= 3;
+    AND TIMESTAMPDIFF(DAY, IFNULL(assigned_date, date), NOW()) >= 3;
 END //
 DELIMITER ;
 

@@ -84,13 +84,20 @@ router.get('/stats', authenticateToken, authorizeRole('department'), async (req,
         const [inProgress] = await db.query("SELECT COUNT(*) AS count FROM complaint WHERE dept_id = ? AND status = 'In Progress'", [deptId]);
         const [resolved] = await db.query("SELECT COUNT(*) AS count FROM complaint WHERE dept_id = ? AND status = 'Resolved'", [deptId]);
         const [escalated] = await db.query("SELECT COUNT(*) AS count FROM complaint WHERE dept_id = ? AND status = 'Escalated'", [deptId]);
+        
+        // Count complaints not completed in 1 or 2 days (>= 24 hours)
+        const [overdue] = await db.query(
+            "SELECT COUNT(*) AS count FROM complaint WHERE dept_id = ? AND status IN ('Pending', 'In Progress') AND TIMESTAMPDIFF(HOUR, IFNULL(assigned_date, date), NOW()) >= 24", 
+            [deptId]
+        );
 
         res.json({
             total: total[0].count,
             pending: pending[0].count,
             in_progress: inProgress[0].count,
             resolved: resolved[0].count,
-            escalated: escalated[0].count
+            escalated: escalated[0].count,
+            overdue: overdue[0].count
         });
     } catch (err) {
         console.error(err);

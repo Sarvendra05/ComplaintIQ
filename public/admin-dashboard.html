@@ -248,7 +248,7 @@
                                         <td>${formatDate(c.date)}</td>
                                         <td>${c.dept_name || '<span style="color:var(--text-muted)">—</span>'}</td>
                                         <td>
-                                            ${!c.dept_id ? `<button class="btn btn-primary btn-sm" onclick="openAssignModal(${c.complaint_id}, '${c.title.replace(/'/g, "\\'")}')">Assign</button>` : ''}
+                                            ${!c.dept_id ? `<button class="btn ${c.status === 'Escalated' ? 'btn-danger' : 'btn-primary'} btn-sm" onclick="openAssignModal(${c.complaint_id}, '${c.title.replace(/'/g, "\\'")}', ${c.status === 'Escalated'})">${c.status === 'Escalated' ? 'Reassign' : 'Assign'}</button>` : ''}
                                         </td>
                                     </tr>
                                 `).join('')}
@@ -269,9 +269,11 @@
             loadComplaints();
         }
 
-        function openAssignModal(complaintId, title) {
+        function openAssignModal(complaintId, title, isReassign = false) {
             currentComplaintId = complaintId;
             document.getElementById('modalComplaintTitle').textContent = title;
+            document.querySelector('#assignModal .modal-title').textContent = isReassign ? 'Reassign Department' : 'Assign Department';
+            document.querySelector('#assignModal .btn-primary').textContent = isReassign ? 'Reassign' : 'Assign';
             document.getElementById('assignModal').classList.add('active');
         }
 

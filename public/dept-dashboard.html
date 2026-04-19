@@ -16,6 +16,14 @@
                 <h1 class="page-title"><i class="ph-fill ph-buildings" style="color:var(--primary);"></i> Department Dashboard</h1>
                 <p class="page-subtitle" id="deptSubtitle">Manage assigned complaints</p>
             </div>
+            <!-- Overdue Warning Banner -->
+            <div id="overdueWarning" style="display:none; background:#fff3cd; color:#855c0b; border-left:4px solid #ffc107; padding:16px; border-radius:var(--radius-md); margin-bottom:24px; align-items:flex-start; gap:12px;">
+                <i class="ph-fill ph-warning" style="font-size:24px; color:#ffc107; margin-top:2px;"></i>
+                <div>
+                    <h4 style="margin:0 0 4px 0; color:#664d03;">Action Required: Overdue Tasks</h4>
+                    <p style="margin:0; font-size:14px;">You have <strong id="overdueCount">0</strong> complaint(s) pending for over 24 hours. Please complete them ASAP to prevent auto-escalation.</p>
+                </div>
+            </div>
 
             <!-- Stats Cards -->
             <div class="grid-4" style="margin-bottom:24px;" id="deptStats">
@@ -136,6 +144,14 @@
                 document.getElementById('statPending').textContent = stats.pending;
                 document.getElementById('statProgress').textContent = stats.in_progress;
                 document.getElementById('statResolved').textContent = stats.resolved;
+                
+                // Show warning if there are overdue tasks
+                if (stats.overdue > 0) {
+                    document.getElementById('overdueCount').textContent = stats.overdue;
+                    document.getElementById('overdueWarning').style.display = 'flex';
+                } else {
+                    document.getElementById('overdueWarning').style.display = 'none';
+                }
             } catch (err) {
                 console.error('Failed to load stats:', err);
             }
