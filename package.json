@@ -13,9 +13,12 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "form-data": "^4.0.5",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.1.1",
-    "mysql2": "^3.11.5",
-    "nodemon": "^3.1.14"
+    "mysql2": "^3.22.3",
+    "node-fetch": "^2.7.0",
+    "nodemon": "^3.1.14",
+    "puppeteer": "^24.43.1"
   }
 }

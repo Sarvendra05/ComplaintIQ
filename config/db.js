@@ -1,22 +1,23 @@
-const mysql = require('mysql2/promise');
+const mysql = require("mysql2");
+const fs = require("fs");
+require("dotenv").config();
 
-const poolConfig = process.env.DB_HOST && process.env.DB_HOST.startsWith('mysql://')
-    ? {
-        uri: process.env.DB_HOST,
-        waitForConnections: true,
-        connectionLimit: 10,
-        queueLimit: 0
-    }
-    : {
-        host: process.env.DB_HOST || 'localhost',
-        user: process.env.DB_USER || 'root',
-        password: process.env.DB_PASSWORD || '',
-        database: process.env.DB_NAME || 'complaint_system',
-        waitForConnections: true,
-        connectionLimit: 10,
-        queueLimit: 0
-    };
+const pool = mysql.createPool({
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
 
-const pool = mysql.createPool(poolConfig);
+  ssl: {
+    ca: fs.readFileSync("./certs/ca.pem"),
+    rejectUnauthorized: false
+  },
 
-module.exports = pool;
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+  connectTimeout: 60000
+});
+
+module.exports = pool.promise();

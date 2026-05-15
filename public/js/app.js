@@ -65,7 +65,7 @@ async function apiRequest(endpoint, options = {}) {
         config.headers['Authorization'] = `Bearer ${token}`;
     }
 
-    if (options.body instanceof FormData) {
+    if (options.body instanceof FormData || (options.body && typeof options.body.append === 'function')) {
         delete config.headers['Content-Type'];
         config.body = options.body;
     } else if (config.body && typeof config.body === 'object') {

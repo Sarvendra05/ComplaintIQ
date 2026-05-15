@@ -12,6 +12,8 @@ DROP TABLE IF EXISTS complaint;
 DROP TABLE IF EXISTS dept_officer;
 DROP TABLE IF EXISTS admin;
 DROP TABLE IF EXISTS citizen;
+DROP TABLE IF EXISTS complaint_additional_photo;
+DROP TABLE IF EXISTS complaint_reopen_log;
 DROP TABLE IF EXISTS department;
 DROP TABLE IF EXISTS area;
 SET FOREIGN_KEY_CHECKS = 1;
@@ -87,6 +89,8 @@ CREATE TABLE IF NOT EXISTS complaint (
     assigned_date DATETIME DEFAULT NULL,
     date DATETIME DEFAULT CURRENT_TIMESTAMP,
     resolved_date DATETIME DEFAULT NULL,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    reopen_count INT DEFAULT 0,
     FOREIGN KEY (citizen_id) REFERENCES citizen(citizen_id) ON DELETE CASCADE,
     FOREIGN KEY (area_id) REFERENCES area(area_id) ON DELETE CASCADE,
     FOREIGN KEY (dept_id) REFERENCES department(dept_id) ON DELETE SET NULL
@@ -107,4 +111,27 @@ CREATE TABLE IF NOT EXISTS audit_log (
     action_date DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (complaint_id) REFERENCES complaint(complaint_id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
-n
+
+-- ============================================
+-- REOPEN LOG TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS complaint_reopen_log (
+    log_id INT AUTO_INCREMENT PRIMARY KEY,
+    complaint_id INT NOT NULL,
+    reason TEXT NOT NULL,
+    image_path VARCHAR(255) DEFAULT NULL,
+    reopened_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (complaint_id) REFERENCES complaint(complaint_id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- ============================================
+-- ADDITIONAL PHOTO TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS complaint_additional_photo (
+    photo_id INT AUTO_INCREMENT PRIMARY KEY,
+    complaint_id INT NOT NULL,
+    image_path VARCHAR(255) NOT NULL,
+    uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    uploaded_by_role ENUM('citizen', 'department', 'admin') NOT NULL,
+    FOREIGN KEY (complaint_id) REFERENCES complaint(complaint_id) ON DELETE CASCADE
+) ENGINE=InnoDB;

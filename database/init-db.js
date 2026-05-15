@@ -18,8 +18,15 @@ const baseConfig = process.env.DB_HOST && process.env.DB_HOST.startsWith('mysql:
     };
 
 const DB_CONFIG = {
-    ...baseConfig,
-    multipleStatements: true
+  ...baseConfig,
+  port: process.env.DB_PORT,
+  database: process.env.DB_NAME,
+  multipleStatements: true,
+
+ ssl: {
+  ca: fs.readFileSync("./certs/ca.pem"),
+  rejectUnauthorized: false
+}
 };
 
 async function runSQLFile(connection, filePath, label) {

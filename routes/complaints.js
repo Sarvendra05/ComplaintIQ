@@ -360,8 +360,8 @@ router.post('/:id/reopen', authenticateToken, authorizeRole('citizen'), (req, re
 
         // Update status and increment reopen_count
         await db.query(
-            'UPDATE complaint SET status = "In Progress", reopen_count = reopen_count + 1, resolved_date = NULL, updated_at = CURRENT_TIMESTAMP WHERE complaint_id = ?',
-            [complaintId]
+            'UPDATE complaint SET status = ?, reopen_count = reopen_count + 1, resolved_date = NULL, updated_at = CURRENT_TIMESTAMP WHERE complaint_id = ?',
+            ['In Progress', complaintId]
         );
 
         // Insert into reopen log
@@ -424,8 +424,8 @@ router.post('/:id/add-proof', authenticateToken, authorizeRole('citizen'), (req,
 
         // Insert into additional photos table
         await db.query(
-            'INSERT INTO complaint_additional_photo (complaint_id, photo_url) VALUES (?, ?)',
-            [complaintId, photoUrl]
+            'INSERT INTO complaint_additional_photo (complaint_id, image_path, uploaded_by_role) VALUES (?, ?, ?)',
+            [complaintId, photoUrl, 'citizen']
         );
 
         // Log the action

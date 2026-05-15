@@ -108,7 +108,7 @@
                 
                 const imageFile = document.getElementById('image').files[0];
                 if (imageFile) {
-                    formData.append('image', imageFile);
+                    formData.append('image', imageFile, imageFile.name);
                 }
 
                 const data = await apiRequest('/complaints', {
