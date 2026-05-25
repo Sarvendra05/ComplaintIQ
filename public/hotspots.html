@@ -3,67 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hotspot Detection - ComplaintIQ</title>
+    <meta name="description" content="ComplaintIQ Hotspot Detection - Real-time smart-city GIS dashboard for tracking incident distribution and priority clusters.">
+    <title>Hotspot Detection & GIS Analytics - ComplaintIQ</title>
+    
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Design System CSS -->
     <link rel="stylesheet" href="/css/styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    
+    <!-- Leaflet.js Mapping Library (CSS & JS) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <!-- Leaflet Heatmap Plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 </head>
 <body>
-    <nav class="navbar" id="navbar"></nav>
+    <div class="app-layout">
+        <nav class="sidebar" id="sidebar"></nav>
 
-    <div class="page-content">
-        <div class="container">
-            <div class="page-header">
-                <h1 class="page-title">🗺️ Hotspot Detection</h1>
-                <p class="page-subtitle">Identify recurring problem areas, category frequency, and complaint trends</p>
-            </div>
+        <div class="main-content">
+            <header class="topbar" id="topbar"></header>
+            
+            <div class="page-container" style="padding: 24px;">
+                <div class="page-header" style="margin-bottom: 16px;">
+                    <h1 class="page-title"><i class="ph ph-map-pin"></i> Geospatial Hotspot Detection</h1>
+                    <p class="page-subtitle">Real-time smart-city GIS dashboard. Track incident distribution, clusters, and priority clusters</p>
+                </div>
 
-            <!-- Hotspot Area Rankings -->
-            <div class="chart-row">
-                <div class="card">
-                    <div class="card-header">
-                        <span class="card-title">🔥 Top Problem Zones</span>
+                <!-- Full-Screen GIS Map Wrapper -->
+                <div class="full-map-wrapper">
+                    <!-- Map Container -->
+                    <div id="map" class="full-map-container"></div>
+                    
+                    <!-- Floating GIS Filters Panel -->
+                    <div class="map-filter-overlay">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1px solid var(--border); padding-bottom:12px;">
+                            <h3 style="margin:0; font-size:1.05rem; font-weight:700;">📡 GIS Command Panel</h3>
+                            <span class="badge" style="background:rgba(99,102,241,0.1); color:var(--primary); font-size:0.7rem; font-weight:700;">LIVE</span>
+                        </div>
+                        
+                        <!-- Search Box -->
+                        <div class="form-group" style="margin-bottom:16px;">
+                            <label class="form-label" style="font-size:0.75rem; color:var(--text-secondary);">Query Search</label>
+                            <input type="text" id="mapSearch" class="form-control" placeholder="Search complaints..." style="padding:6px 12px; font-size:0.85rem;" oninput="applyMapFilters()">
+                        </div>
+
+                        <!-- Category Filter -->
+                        <div class="form-group" style="margin-bottom:16px;">
+                            <label class="form-label" style="font-size:0.75rem; color:var(--text-secondary);">Filter Category</label>
+                            <select id="mapCategory" class="form-control" style="padding:6px 12px; font-size:0.85rem;" onchange="applyMapFilters()">
+                                <option value="">All Categories</option>
+                                <option value="Road">Road</option>
+                                <option value="Water">Water</option>
+                                <option value="Garbage">Garbage</option>
+                                <option value="Light">Light</option>
+                                <option value="Drainage">Drainage</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
+                        <!-- Status Filter -->
+                        <div class="form-group" style="margin-bottom:16px;">
+                            <label class="form-label" style="font-size:0.75rem; color:var(--text-secondary);">Filter Status</label>
+                            <select id="mapStatus" class="form-control" style="padding:6px 12px; font-size:0.85rem;" onchange="applyMapFilters()">
+                                <option value="">All Statuses</option>
+                                <option value="Pending">Pending</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Resolved">Resolved</option>
+                                <option value="Escalated">Escalated</option>
+                            </select>
+                        </div>
+
+                        <!-- Visualization Toggles -->
+                        <div class="form-group" style="margin-bottom:20px; background:var(--bg-main); padding:12px; border-radius:var(--radius-md); border:1px solid var(--border);">
+                            <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-size:0.85rem; font-weight:600; color:var(--text-primary);">
+                                <span><i class="ph ph-fire"></i> Density Heatmap</span>
+                                <input type="checkbox" id="heatmapToggle" style="width:16px; height:16px;" onchange="toggleHeatmap()">
+                            </label>
+                            <p style="margin:4px 0 0 0; font-size:0.75rem; color:var(--text-secondary);">Overlay relative density density cluster values.</p>
+                        </div>
+
+                        <!-- Real-time GIS Statistics -->
+                        <div style="border-top:1px solid var(--border); padding-top:16px;">
+                            <h4 style="margin-bottom:12px; font-size:0.85rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-secondary);">Command Intel</h4>
+                            
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                                <div style="background:var(--bg-main); padding:10px; border-radius:var(--radius-md); border:1px solid var(--border); text-align:center;">
+                                    <div style="font-size:1.3rem; font-weight:800; color:var(--primary);" id="activeMarkers">0</div>
+                                    <div style="font-size:0.65rem; color:var(--text-secondary); text-transform:uppercase;">Plotted</div>
+                                </div>
+                                <div style="background:var(--bg-main); padding:10px; border-radius:var(--radius-md); border:1px solid var(--border); text-align:center;">
+                                    <div style="font-size:1.3rem; font-weight:800; color:var(--danger);" id="escalatedCount">0</div>
+                                    <div style="font-size:0.65rem; color:var(--text-secondary); text-transform:uppercase;">Escalated</div>
+                                </div>
+                            </div>
+                            
+                            <div style="background:var(--bg-main); padding:10px; border-radius:var(--radius-md); border:1px solid var(--border); text-align:center; margin-top:12px;">
+                                <div style="font-size:0.9rem; font-weight:700; color:var(--text-primary);" id="highestZone">—</div>
+                                <div style="font-size:0.65rem; color:var(--text-secondary); text-transform:uppercase;">Highest Incident Zone</div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="chart-container">
-                        <canvas id="hotspotChart"></canvas>
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="card-header">
-                        <span class="card-title">📊 Category Frequency</span>
-                    </div>
-                    <div class="chart-container">
-                        <canvas id="categoryChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Monthly Trend -->
-            <div class="card" style="margin-bottom:24px;">
-                <div class="card-header">
-                    <span class="card-title">📈 Monthly Complaint Trend</span>
-                </div>
-                <div class="chart-container" style="height:350px;">
-                    <canvas id="trendChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Hotspot Table -->
-            <div class="card" style="margin-bottom:24px;">
-                <div class="card-header">
-                    <span class="card-title">🏆 Area Complaint Rankings</span>
-                </div>
-                <div id="hotspotTable">
-                    <div class="spinner"></div>
-                </div>
-            </div>
-
-            <!-- Category Breakdown Table -->
-            <div class="card">
-                <div class="card-header">
-                    <span class="card-title">📋 Category Breakdown</span>
-                </div>
-                <div id="categoryTable">
-                    <div class="spinner"></div>
                 </div>
             </div>
         </div>
@@ -75,261 +115,217 @@
 
     <script src="/js/app.js"></script>
     <script>
+        // Central New Delhi coordinates mapping to the seeded zones
+        const ZONE_COORDINATES = {
+            'Zone A - Central Market': [28.6150, 77.2080],
+            'Zone B - Railway Station': [28.6415, 77.2200],
+            'Zone C - Industrial Area': [28.5850, 77.2400],
+            'Zone D - Residential North': [28.6600, 77.2100],
+            'Zone E - Residential South': [28.5500, 77.2100],
+            'Zone F - University Campus': [28.5840, 77.1630],
+            'Zone G - Hospital Road': [28.6180, 77.2150],
+            'Zone H - Bus Stand': [28.6250, 77.2300],
+            'Zone I - Old Town': [28.6560, 77.2350],
+            'Zone J - New Colony': [28.6300, 77.1800],
+            'Zone K - IT Park': [28.5300, 77.2600],
+            'Zone L - Lake Area': [28.6100, 77.1950]
+        };
+
+        let map = null;
+        let complaintsList = [];
+        let markerLayer = null;
+        let heatmapLayer = null;
+
         document.addEventListener('DOMContentLoaded', () => {
             if (!requireAuth(['admin'])) return;
-            loadHotspotData();
+            initMap();
+            loadMapData();
         });
 
-        async function loadHotspotData() {
+        function initMap() {
+            // Initialize Leaflet Map centered on Central New Delhi
+            map = L.map('map', {
+                zoomControl: false // Disable default zoom to custom position it later
+            }).setView([28.6139, 77.2090], 12);
+
+            // Add standard OpenStreetMap tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Add zoom control at bottom-left corner
+            L.control.zoom({ position: 'bottomleft' }).addTo(map);
+
+            // Create Layer Groups
+            markerLayer = L.layerGroup().addTo(map);
+        }
+
+        async function loadMapData() {
             try {
-                const data = await apiRequest('/admin/hotspots');
-                renderHotspotChart(data.hotspot_areas);
-                renderCategoryChart(data.category_frequency);
-                renderTrendChart(data.monthly_trend);
-                renderHotspotTable(data.hotspot_areas);
-                renderCategoryTable(data.category_frequency);
+                // Fetch all complaints from the Admin endpoint
+                complaintsList = await apiRequest('/admin/complaints');
+                
+                // Set default coordinates with randomized slight offset to complaints
+                complaintsList.forEach(c => {
+                    const zoneCoords = ZONE_COORDINATES[c.area_name] || [28.6139, 77.2090];
+                    // Random offset ensures markers don't overlap exactly
+                    const latOffset = (Math.random() - 0.5) * 0.007;
+                    const lngOffset = (Math.random() - 0.5) * 0.007;
+                    c.coordinates = [zoneCoords[0] + latOffset, zoneCoords[1] + lngOffset];
+                });
+
+                applyMapFilters();
             } catch (err) {
-                showToast('Failed to load hotspot data', 'error');
+                console.error(err);
+                showToast('Failed to retrieve geospatial data', 'error');
             }
         }
 
-        function renderHotspotChart(areas) {
-            const ctx = document.getElementById('hotspotChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: areas.map(a => a.area_name.replace('Zone ', '').substring(0, 20)),
-                    datasets: [{
-                        label: 'Complaints',
-                        data: areas.map(a => a.complaint_count),
-                        backgroundColor: areas.map((_, i) => {
-                            const colors = [
-                                'rgba(239, 68, 68, 0.8)',
-                                'rgba(249, 115, 22, 0.8)',
-                                'rgba(245, 158, 11, 0.8)',
-                                'rgba(99, 102, 241, 0.8)',
-                                'rgba(6, 182, 212, 0.8)',
-                                'rgba(16, 185, 129, 0.8)',
-                                'rgba(139, 92, 246, 0.7)',
-                                'rgba(236, 72, 153, 0.7)',
-                                'rgba(34, 197, 94, 0.7)',
-                                'rgba(59, 130, 246, 0.7)',
-                                'rgba(168, 85, 247, 0.7)',
-                                'rgba(251, 146, 60, 0.7)'
-                            ];
-                            return colors[i % colors.length];
-                        }),
-                        borderRadius: 6,
-                        borderSkipped: false
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: { color: '#94a3b8', stepSize: 1 },
-                            grid: { color: 'rgba(148, 163, 184, 0.08)' }
-                        },
-                        x: {
-                            ticks: { color: '#94a3b8', font: { size: 11 } },
-                            grid: { display: false }
-                        }
-                    }
-                }
+        function applyMapFilters() {
+            const query = document.getElementById('mapSearch').value.toLowerCase();
+            const status = document.getElementById('mapStatus').value;
+            const category = document.getElementById('mapCategory').value;
+
+            // Filter local complaint list
+            const filtered = complaintsList.filter(c => {
+                const matchesSearch = c.title.toLowerCase().includes(query) || 
+                                      (c.description && c.description.toLowerCase().includes(query)) ||
+                                      c.complaint_id.toString().includes(query) ||
+                                      c.citizen_name.toLowerCase().includes(query) ||
+                                      c.area_name.toLowerCase().includes(query);
+                const matchesStatus = !status || c.status === status;
+                const matchesCategory = !category || c.category === category;
+                return matchesSearch && matchesStatus && matchesCategory;
             });
-        }
 
-        function renderCategoryChart(categories) {
-            const ctx = document.getElementById('categoryChart').getContext('2d');
-            const catColors = {
-                'Road': '#ef4444',
-                'Water': '#3b82f6',
-                'Garbage': '#f59e0b',
-                'Light': '#f97316',
-                'Drainage': '#06b6d4',
-                'Other': '#8b5cf6'
-            };
-            new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: categories.map(c => c.category),
-                    datasets: [{
-                        data: categories.map(c => c.total_complaints),
-                        backgroundColor: categories.map(c => catColors[c.category] || '#6366f1'),
-                        borderWidth: 0,
-                        hoverOffset: 8
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: '60%',
-                    plugins: {
-                        legend: {
-                            position: 'right',
-                            labels: {
-                                color: '#94a3b8',
-                                padding: 16,
-                                usePointStyle: true,
-                                pointStyleWidth: 10,
-                                font: { size: 12 }
-                            }
-                        }
-                    }
-                }
+            // Clear previous layer items
+            markerLayer.clearLayers();
+            if (heatmapLayer) {
+                map.removeLayer(heatmapLayer);
+                heatmapLayer = null;
+            }
+
+            // Plot active circular markers
+            filtered.forEach(c => {
+                const markerColor = getPriorityColor(c.priority);
+                
+                const marker = L.circleMarker(c.coordinates, {
+                    radius: 8,
+                    fillColor: markerColor,
+                    color: '#ffffff',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                });
+
+                // Custom Premium Popup HTML Design
+                const popupContent = `
+                    <div style="font-family:'Inter', sans-serif; padding:4px; max-width:260px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:8px;">
+                            <span class="badge badge-category" style="margin:0;">${c.category}</span>
+                            <span style="font-weight:700; color:var(--text-secondary); font-size:0.75rem;">#${c.complaint_id}</span>
+                        </div>
+                        <h4 style="margin:0 0 6px 0; font-size:0.95rem; font-weight:700; color:var(--text-primary); line-height:1.3;">${c.title}</h4>
+                        <p style="margin:0 0 10px 0; font-size:0.8rem; color:var(--text-secondary); line-height:1.4;">${c.description ? c.description.substring(0, 80) + '...' : 'No description.'}</p>
+                        
+                        <div style="border-top:1px solid var(--border); padding-top:8px; display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+                            <div>
+                                <span style="font-size:0.65rem; color:var(--text-secondary); text-transform:uppercase; display:block;">Status</span>
+                                <span style="font-weight:600; font-size:0.75rem;">${c.status}</span>
+                            </div>
+                            <div>
+                                <span style="font-size:0.65rem; color:var(--text-secondary); text-transform:uppercase; display:block;">Priority</span>
+                                <span style="font-weight:600; font-size:0.75rem; color:${markerColor};">${c.priority}</span>
+                            </div>
+                            <div>
+                                <span style="font-size:0.65rem; color:var(--text-secondary); text-transform:uppercase; display:block;">Location</span>
+                                <span style="font-weight:600; font-size:0.75rem;">${c.area_name.split(' - ')[0]}</span>
+                            </div>
+                            <div>
+                                <span style="font-size:0.65rem; color:var(--text-secondary); text-transform:uppercase; display:block;">Reporter</span>
+                                <span style="font-weight:600; font-size:0.75rem;">${c.citizen_name.split(' ')[0]}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                marker.bindPopup(popupContent, {
+                    maxWidth: 280,
+                    className: 'map-custom-popup'
+                });
+                
+                markerLayer.addLayer(marker);
             });
+
+            // Handle Density Heatmap view
+            if (document.getElementById('heatmapToggle').checked) {
+                const heatPoints = filtered.map(c => [c.coordinates[0], c.coordinates[1], getHeatIntensity(c.priority)]);
+                heatmapLayer = L.heatLayer(heatPoints, {
+                    radius: 25,
+                    blur: 15,
+                    maxZoom: 17,
+                    gradient: {0.4: 'blue', 0.65: 'lime', 1: 'red'}
+                }).addTo(map);
+            }
+
+            // Update Panel Statistics
+            updatePanelStats(filtered);
         }
 
-        function renderTrendChart(trend) {
-            const ctx = document.getElementById('trendChart').getContext('2d');
-            const reversed = [...trend].reverse();
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: reversed.map(t => t.month),
-                    datasets: [
-                        {
-                            label: 'Total Complaints',
-                            data: reversed.map(t => t.total_complaints),
-                            borderColor: '#6366f1',
-                            backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                            fill: true,
-                            tension: 0.4,
-                            pointRadius: 6,
-                            pointHoverRadius: 8,
-                            pointBackgroundColor: '#6366f1'
-                        },
-                        {
-                            label: 'Resolved',
-                            data: reversed.map(t => t.resolved),
-                            borderColor: '#10b981',
-                            backgroundColor: 'rgba(16, 185, 129, 0.08)',
-                            fill: true,
-                            tension: 0.4,
-                            pointRadius: 5,
-                            pointHoverRadius: 7,
-                            pointBackgroundColor: '#10b981'
-                        },
-                        {
-                            label: 'Pending',
-                            data: reversed.map(t => t.pending),
-                            borderColor: '#f59e0b',
-                            backgroundColor: 'rgba(245, 158, 11, 0.08)',
-                            fill: true,
-                            tension: 0.4,
-                            pointRadius: 5,
-                            pointHoverRadius: 7,
-                            pointBackgroundColor: '#f59e0b'
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                        intersect: false,
-                        mode: 'index'
-                    },
-                    plugins: {
-                        legend: {
-                            labels: { color: '#94a3b8', usePointStyle: true, padding: 20 }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: { color: '#94a3b8', stepSize: 1 },
-                            grid: { color: 'rgba(148, 163, 184, 0.08)' }
-                        },
-                        x: {
-                            ticks: { color: '#94a3b8' },
-                            grid: { display: false }
-                        }
-                    }
-                }
+        function toggleHeatmap() {
+            applyMapFilters();
+        }
+
+        function getPriorityColor(priority) {
+            switch(priority) {
+                case 'Critical': return '#ef4444'; // Red
+                case 'High': return '#f97316';     // Orange
+                case 'Medium': return '#f59e0b';   // Yellow
+                case 'Low': return '#3b82f6';      // Blue
+                default: return '#6b7280';
+            }
+        }
+
+        function getHeatIntensity(priority) {
+            switch(priority) {
+                case 'Critical': return 1.0;
+                case 'High': return 0.7;
+                case 'Medium': return 0.4;
+                case 'Low': return 0.2;
+                default: return 0.3;
+            }
+        }
+
+        function updatePanelStats(filteredList) {
+            // Count metrics
+            const total = filteredList.length;
+            const escalated = filteredList.filter(c => c.status === 'Escalated').length;
+            
+            document.getElementById('activeMarkers').textContent = total;
+            document.getElementById('escalatedCount').textContent = escalated;
+
+            // Find area with highest complaints count
+            if (total === 0) {
+                document.getElementById('highestZone').textContent = '—';
+                return;
+            }
+
+            const areaCounts = {};
+            filteredList.forEach(c => {
+                areaCounts[c.area_name] = (areaCounts[c.area_name] || 0) + 1;
             });
-        }
 
-        function renderHotspotTable(areas) {
-            const container = document.getElementById('hotspotTable');
-            container.innerHTML = `
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Rank</th>
-                                <th>Area</th>
-                                <th>Total Complaints</th>
-                                <th>Severity</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${areas.map((a, i) => `
-                                <tr>
-                                    <td>
-                                        <span style="display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; background:${i < 3 ? 'var(--danger-bg)' : 'var(--bg-tertiary)'}; color:${i < 3 ? 'var(--danger)' : 'var(--text-secondary)'}; font-weight:700; font-size:0.8rem;">
-                                            ${i + 1}
-                                        </span>
-                                    </td>
-                                    <td><strong>${a.area_name}</strong></td>
-                                    <td>${a.complaint_count}</td>
-                                    <td>
-                                        ${a.complaint_count >= 5 ? '<span class="badge badge-escalated">Critical</span>' :
-                                          a.complaint_count >= 3 ? '<span class="badge badge-pending">Warning</span>' :
-                                          '<span class="badge badge-resolved">Normal</span>'}
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-        }
+            let highestZone = '—';
+            let maxCount = 0;
+            for (const zone in areaCounts) {
+                if (areaCounts[zone] > maxCount) {
+                    maxCount = areaCounts[zone];
+                    highestZone = zone.split(' - ')[0]; // E.g. 'Zone A'
+                }
+            }
 
-        function renderCategoryTable(categories) {
-            const container = document.getElementById('categoryTable');
-            container.innerHTML = `
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Category</th>
-                                <th>Total</th>
-                                <th>Resolved</th>
-                                <th>Pending</th>
-                                <th>Escalated</th>
-                                <th>Resolution Rate</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${categories.map(c => {
-                                const rate = c.total_complaints > 0 ? Math.round((c.resolved / c.total_complaints) * 100) : 0;
-                                return `
-                                <tr>
-                                    <td><span class="badge badge-category">${c.category}</span></td>
-                                    <td><strong>${c.total_complaints}</strong></td>
-                                    <td style="color:var(--success)">${c.resolved}</td>
-                                    <td style="color:var(--warning)">${c.pending}</td>
-                                    <td style="color:var(--danger)">${c.escalated}</td>
-                                    <td>
-                                        <div style="display:flex; align-items:center; gap:8px;">
-                                            <div style="flex:1; height:6px; background:var(--bg-tertiary); border-radius:3px; overflow:hidden;">
-                                                <div style="width:${rate}%; height:100%; background:${rate >= 60 ? 'var(--success)' : rate >= 30 ? 'var(--warning)' : 'var(--danger)'}; border-radius:3px;"></div>
-                                            </div>
-                                            <span style="font-size:0.85rem; font-weight:600; color:var(--text-secondary);">${rate}%</span>
-                                        </div>
-                                    </td>
-                                </tr>`;
-                            }).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
+            document.getElementById('highestZone').textContent = `${highestZone} (${maxCount} items)`;
         }
     </script>
 </body>

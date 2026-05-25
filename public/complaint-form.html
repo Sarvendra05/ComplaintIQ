@@ -4,15 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>File Complaint - ComplaintIQ</title>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
-    <nav class="navbar" id="navbar"></nav>
+    <div class="app-layout">
+        <nav class="sidebar" id="sidebar"></nav>
 
-    <div class="page-content">
-        <div class="container">
+        <div class="main-content">
+            <header class="topbar" id="topbar"></header>
+            
+            <div class="page-container">
+                <div class="container">
             <div class="page-header">
-                <h1 class="page-title">📝 File a New Complaint</h1>
+                <h1 class="page-title"><i class="ph ph-pencil-simple-line"></i> File a New Complaint</h1>
                 <p class="page-subtitle">Report a public issue in your area</p>
             </div>
 
@@ -28,12 +33,12 @@
                             <label class="form-label">Category *</label>
                             <select class="form-control" id="category" required>
                                 <option value="">Select Category</option>
-                                <option value="Road">🛣️ Road</option>
-                                <option value="Water">💧 Water</option>
-                                <option value="Garbage">🗑️ Garbage</option>
-                                <option value="Light">💡 Streetlight</option>
-                                <option value="Drainage">🌊 Drainage</option>
-                                <option value="Other">📋 Other</option>
+                                <option value="Road">Road</option>
+                                <option value="Water">Water</option>
+                                <option value="Garbage">Garbage</option>
+                                <option value="Light">Streetlight</option>
+                                <option value="Drainage">Drainage</option>
+                                <option value="Other">Other</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -74,6 +79,7 @@
                         <button type="submit" class="btn btn-primary" id="submitBtn">Submit Complaint</button>
                     </div>
                 </form>
+            </div>
             </div>
         </div>
     </div>

@@ -3,38 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ComplaintIQ Performance Report - Unified department rankings, municipal resolution times, and municipal complaint analytics.">
     <title>Performance Report - ComplaintIQ</title>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="/css/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 </head>
 <body>
-    <nav class="navbar" id="navbar"></nav>
+    <div class="app-layout">
+        <nav class="sidebar" id="sidebar"></nav>
 
-    <div class="page-content">
-        <div class="container">
+        <div class="main-content">
+            <header class="topbar" id="topbar"></header>
+            
+            <div class="page-container">
             <div class="page-header">
-                <h1 class="page-title">📈 Performance Report</h1>
-                <p class="page-subtitle">Department rankings, resolution times, and complaint analytics</p>
+                <h1 class="page-title"><i class="ph-fill ph-chart-line" style="color:var(--primary);"></i> Civic Intelligence & Performance Report</h1>
+                <p class="page-subtitle">Unified department rankings, resolution times, area hotspots, and complaint analytics</p>
             </div>
 
             <!-- Overview Stats -->
             <div class="grid-3" style="margin-bottom:24px;" id="overviewStats">
                 <div class="stat-card success">
-                    <div class="stat-icon">🏆</div>
+                    <div class="stat-icon"><i class="ph ph-trophy"></i></div>
                     <div class="stat-content">
                         <div class="stat-value" id="topDept">—</div>
                         <div class="stat-label">Top Department</div>
                     </div>
                 </div>
                 <div class="stat-card info">
-                    <div class="stat-icon">⏱️</div>
+                    <div class="stat-icon"><i class="ph ph-clock"></i></div>
                     <div class="stat-content">
                         <div class="stat-value" id="avgResolution">—</div>
                         <div class="stat-label">Avg Resolution (hrs)</div>
                     </div>
                 </div>
                 <div class="stat-card accent">
-                    <div class="stat-icon">📊</div>
+                    <div class="stat-icon"><i class="ph ph-chart-bar"></i></div>
                     <div class="stat-content">
                         <div class="stat-value" id="totalResolved">—</div>
                         <div class="stat-label">Total Resolved</div>
@@ -42,36 +47,87 @@
                 </div>
             </div>
 
-            <!-- Charts -->
-            <div class="chart-row">
+            <!-- Charts Section 1: Department Performance -->
+            <div class="chart-row" style="margin-bottom:24px;">
                 <div class="card">
                     <div class="card-header">
-                        <span class="card-title">🏅 Department Rankings</span>
+                        <span class="card-title"><i class="ph ph-medal"></i> Department Rankings</span>
                     </div>
-                    <div class="chart-container" style="height:350px;">
+                    <div class="chart-container" style="height:320px;">
                         <canvas id="rankingChart"></canvas>
                     </div>
                 </div>
                 <div class="card">
                     <div class="card-header">
-                        <span class="card-title">⏱️ Avg Resolution Time (hours)</span>
+                        <span class="card-title"><i class="ph ph-clock"></i> Avg Resolution Time (hours)</span>
                     </div>
-                    <div class="chart-container" style="height:350px;">
+                    <div class="chart-container" style="height:320px;">
                         <canvas id="resolutionChart"></canvas>
                     </div>
                 </div>
             </div>
 
-            <!-- Detailed Table -->
-            <div class="card">
+            <!-- Charts Section 2: Geospatial & Category Hotspots -->
+            <div class="chart-row" style="margin-bottom:24px;">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title"><i class="ph ph-fire"></i> Top Problem Zones</span>
+                    </div>
+                    <div class="chart-container" style="height:320px;">
+                        <canvas id="hotspotChart"></canvas>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title"><i class="ph ph-chart-pie"></i> Category Frequency</span>
+                    </div>
+                    <div class="chart-container" style="height:320px;">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monthly Trend -->
+            <div class="card" style="margin-bottom:24px;">
                 <div class="card-header">
-                    <span class="card-title">📋 Department Performance Details</span>
+                    <span class="card-title"><i class="ph ph-trend-up"></i> Monthly Complaint Trend</span>
+                </div>
+                <div class="chart-container" style="height:320px;">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Detailed Table -->
+            <div class="card" style="margin-bottom:24px;">
+                <div class="card-header">
+                    <span class="card-title"><i class="ph ph-clipboard-text"></i> Department Performance Details</span>
                 </div>
                 <div id="performanceTable">
                     <div class="spinner"></div>
                 </div>
             </div>
+
+            <!-- Hotspots and Category Tables -->
+            <div class="chart-row" style="margin-bottom:24px;">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title"><i class="ph ph-trophy"></i> Area Complaint Rankings</span>
+                    </div>
+                    <div id="hotspotTable">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title"><i class="ph ph-list-dashes"></i> Category Breakdown</span>
+                    </div>
+                    <div id="categoryTable">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
         </div>
+    </div>
     </div>
 
     <footer class="footer">
@@ -87,13 +143,25 @@
 
         async function loadPerformanceData() {
             try {
-                const data = await apiRequest('/admin/performance');
-                renderOverview(data);
-                renderRankingChart(data);
-                renderResolutionChart(data);
-                renderPerformanceTable(data);
+                const [perfData, hotspotData] = await Promise.all([
+                    apiRequest('/admin/performance'),
+                    apiRequest('/admin/hotspots')
+                ]);
+                
+                renderOverview(perfData);
+                renderRankingChart(perfData);
+                renderResolutionChart(perfData);
+                renderPerformanceTable(perfData);
+
+                // Migrated hotspot visualizations
+                renderHotspotChart(hotspotData.hotspot_areas);
+                renderCategoryChart(hotspotData.category_frequency);
+                renderTrendChart(hotspotData.monthly_trend);
+                renderHotspotTable(hotspotData.hotspot_areas);
+                renderCategoryTable(hotspotData.category_frequency);
             } catch (err) {
-                showToast('Failed to load performance data', 'error');
+                console.error(err);
+                showToast('Failed to load performance & hotspot analytics', 'error');
             }
         }
 
@@ -107,11 +175,11 @@
             const avgTimes = data.filter(d => d.avg_resolution_hours != null);
             if (avgTimes.length > 0) {
                 const avg = avgTimes.reduce((s, d) => s + parseFloat(d.avg_resolution_hours), 0) / avgTimes.length;
-                document.getElementById('avgResolution').textContent = avg.toFixed(1);
+                animateValue('avgResolution', 0, Math.round(avg), 1000);
             }
 
             const totalResolved = data.reduce((s, d) => s + d.resolved_count, 0);
-            document.getElementById('totalResolved').textContent = totalResolved;
+            animateValue('totalResolved', 0, totalResolved, 1000);
         }
 
         function renderRankingChart(data) {
@@ -257,6 +325,245 @@
                                                 <div style="width:${rate}%; height:100%; background:${rate >= 60 ? 'var(--success)' : rate >= 30 ? 'var(--warning)' : 'var(--danger)'}; border-radius:3px;"></div>
                                             </div>
                                             <span style="font-size:0.8rem; font-weight:700; color:var(--text-secondary);min-width:35px;">${rate}%</span>
+                                        </div>
+                                    </td>
+                                </tr>`;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function renderHotspotChart(areas) {
+            const ctx = document.getElementById('hotspotChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: areas.map(a => a.area_name.replace('Zone ', '').substring(0, 20)),
+                    datasets: [{
+                        label: 'Complaints',
+                        data: areas.map(a => a.complaint_count),
+                        backgroundColor: areas.map((_, i) => {
+                            const colors = [
+                                'rgba(239, 68, 68, 0.8)',
+                                'rgba(249, 115, 22, 0.8)',
+                                'rgba(245, 158, 11, 0.8)',
+                                'rgba(99, 102, 241, 0.8)',
+                                'rgba(6, 182, 212, 0.8)',
+                                'rgba(16, 185, 129, 0.8)',
+                                'rgba(139, 92, 246, 0.7)',
+                                'rgba(236, 72, 153, 0.7)',
+                                'rgba(34, 197, 94, 0.7)',
+                                'rgba(59, 130, 246, 0.7)',
+                                'rgba(168, 85, 247, 0.7)',
+                                'rgba(251, 146, 60, 0.7)'
+                            ];
+                            return colors[i % colors.length];
+                        }),
+                        borderRadius: 6,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#94a3b8', stepSize: 1 },
+                            grid: { color: 'rgba(148, 163, 184, 0.08)' }
+                        },
+                        x: {
+                            ticks: { color: '#94a3b8', font: { size: 10 } },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderCategoryChart(categories) {
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            const catColors = {
+                'Road': '#ef4444',
+                'Water': '#3b82f6',
+                'Garbage': '#f59e0b',
+                'Light': '#f97316',
+                'Drainage': '#06b6d4',
+                'Other': '#8b5cf6'
+            };
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: categories.map(c => c.category),
+                    datasets: [{
+                        data: categories.map(c => c.total_complaints),
+                        backgroundColor: categories.map(c => catColors[c.category] || '#6366f1'),
+                        borderWidth: 0,
+                        hoverOffset: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '60%',
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                color: '#94a3b8',
+                                padding: 12,
+                                usePointStyle: true,
+                                pointStyleWidth: 8,
+                                font: { size: 11 }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderTrendChart(trend) {
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            const reversed = [...trend].reverse();
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: reversed.map(t => t.month),
+                    datasets: [
+                        {
+                            label: 'Total Complaints',
+                            data: reversed.map(t => t.total_complaints),
+                            borderColor: '#6366f1',
+                            backgroundColor: 'rgba(99, 102, 241, 0.05)',
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            pointBackgroundColor: '#6366f1'
+                        },
+                        {
+                            label: 'Resolved',
+                            data: reversed.map(t => t.resolved),
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.03)',
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            pointBackgroundColor: '#10b981'
+                        },
+                        {
+                            label: 'Pending',
+                            data: reversed.map(t => t.pending),
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.03)',
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            pointBackgroundColor: '#f59e0b'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: '#94a3b8', usePointStyle: true, padding: 16 }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#94a3b8', stepSize: 1 },
+                            grid: { color: 'rgba(148, 163, 184, 0.08)' }
+                        },
+                        x: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderHotspotTable(areas) {
+            const container = document.getElementById('hotspotTable');
+            container.innerHTML = `
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Area</th>
+                                <th>Total Complaints</th>
+                                <th>Severity</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${areas.map((a, i) => `
+                                <tr>
+                                    <td>
+                                        <span style="display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; background:${i < 3 ? 'var(--danger-bg)' : 'var(--bg-tertiary)'}; color:${i < 3 ? 'var(--danger)' : 'var(--text-secondary)'}; font-weight:700; font-size:0.8rem;">
+                                            ${i + 1}
+                                        </span>
+                                    </td>
+                                    <td><strong>${a.area_name}</strong></td>
+                                    <td>${a.complaint_count}</td>
+                                    <td>
+                                        ${a.complaint_count >= 5 ? '<span class="badge badge-escalated">Critical</span>' :
+                                          a.complaint_count >= 3 ? '<span class="badge badge-pending">Warning</span>' :
+                                          '<span class="badge badge-resolved">Normal</span>'}
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function renderCategoryTable(categories) {
+            const container = document.getElementById('categoryTable');
+            container.innerHTML = `
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Total</th>
+                                <th>Resolved</th>
+                                <th>Pending</th>
+                                <th>Escalated</th>
+                                <th>Resolution Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${categories.map(c => {
+                                const rate = c.total_complaints > 0 ? Math.round((c.resolved / c.total_complaints) * 100) : 0;
+                                return `
+                                <tr>
+                                    <td><span class="badge badge-category">${c.category}</span></td>
+                                    <td><strong>${c.total_complaints}</strong></td>
+                                    <td style="color:var(--success)">${c.resolved}</td>
+                                    <td style="color:var(--warning)">${c.pending}</td>
+                                    <td style="color:var(--danger)">${c.escalated}</td>
+                                    <td>
+                                        <div style="display:flex; align-items:center; gap:8px;">
+                                            <div style="flex:1; height:6px; background:var(--bg-tertiary); border-radius:3px; overflow:hidden;">
+                                                <div style="width:${rate}%; height:100%; background:${rate >= 60 ? 'var(--success)' : rate >= 30 ? 'var(--warning)' : 'var(--danger)'}; border-radius:3px;"></div>
+                                            </div>
+                                            <span style="font-size:0.85rem; font-weight:600; color:var(--text-secondary);">${rate}%</span>
                                         </div>
                                     </td>
                                 </tr>`;

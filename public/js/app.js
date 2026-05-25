@@ -130,90 +130,162 @@ function showToast(message, type = 'info') {
 }
 
 // ============================================
-// NAVBAR RENDERING
+// SIDEBAR & TOPBAR RENDERING
 // ============================================
-function renderNavbar() {
+function renderSidebar() {
     const user = getUser();
-    const navbar = document.getElementById('navbar');
-    if (!navbar) return;
+    const sidebar = document.getElementById('sidebar');
+    if (!sidebar) return;
 
     let links = '';
-    let authSection = '';
-
-    if (!user) {
+    
+    if (user && user.role === 'citizen') {
         links = `
-            <a href="/">Home</a>
+            <a href="/" class="nav-item"><i class="ph ph-house"></i> <span>Home</span></a>
+            <a href="/complaint-form.html" class="nav-item"><i class="ph ph-plus-circle"></i> <span>File Complaint</span></a>
+            <a href="/my-complaints.html" class="nav-item"><i class="ph ph-list-dashes"></i> <span>My Complaints</span></a>
         `;
-        authSection = `
-            <a href="/login.html" class="btn btn-outline btn-sm">Login</a>
-            <a href="/register.html" class="btn btn-primary btn-sm">Register</a>
-        `;
-    } else if (user.role === 'citizen') {
+    } else if (user && user.role === 'admin') {
         links = `
-            <a href="/">Home</a>
-            <a href="/complaint-form.html">File Complaint</a>
-            <a href="/my-complaints.html">My Complaints</a>
+            <a href="/admin-dashboard.html" class="nav-item"><i class="ph ph-squares-four"></i> <span>Dashboard</span></a>
+            <a href="/hotspots.html" class="nav-item"><i class="ph ph-map-trifold"></i> <span>Hotspot Map</span></a>
+            <a href="/performance.html" class="nav-item"><i class="ph ph-trend-up"></i> <span>Performance</span></a>
         `;
-        authSection = `
-            <div class="nav-user-info">
-                <span>👤 ${user.name}</span>
-                <span class="user-badge">Citizen</span>
-                <button class="btn btn-secondary btn-sm" onclick="logout()">Logout</button>
-            </div>
-        `;
-    } else if (user.role === 'admin') {
+    } else if (user && user.role === 'department') {
         links = `
-            <a href="/admin-dashboard.html">Dashboard</a>
-            <a href="/hotspots.html">Hotspots</a>
-            <a href="/performance.html">Performance</a>
-        `;
-        authSection = `
-            <div class="nav-user-info">
-                <span>🛡️ ${user.name}</span>
-                <span class="user-badge">Admin</span>
-                <button class="btn btn-secondary btn-sm" onclick="logout()">Logout</button>
-            </div>
-        `;
-    } else if (user.role === 'department') {
-        links = `
-            <a href="/dept-dashboard.html">Dashboard</a>
-        `;
-        authSection = `
-            <div class="nav-user-info">
-                <span>🏢 ${user.name}</span>
-                <span class="user-badge">${user.dept_name || 'Dept'}</span>
-                <button class="btn btn-secondary btn-sm" onclick="logout()">Logout</button>
-            </div>
+            <a href="/dept-dashboard.html" class="nav-item"><i class="ph ph-squares-four"></i> <span>Dashboard</span></a>
         `;
     }
 
-    navbar.innerHTML = `
-        <a href="/" class="nav-brand">
-            <div class="nav-brand-icon">🏛️</div>
-            <div class="nav-brand-text">Complaint<span>IQ</span></div>
-        </a>
-        <div class="nav-links" id="navLinks">
+    sidebar.innerHTML = `
+        <div class="sidebar-header">
+            <a href="/" class="sidebar-brand">
+                <div class="brand-icon"><i class="ph-fill ph-shield-check"></i></div>
+                <span class="brand-text">ComplaintIQ</span>
+            </a>
+        </div>
+        <div class="sidebar-nav" id="navLinks">
             ${links}
         </div>
-        <div class="nav-auth">
-            ${authSection}
-        </div>
-        <div class="hamburger" onclick="toggleMobileNav()">
-            <span></span><span></span><span></span>
+        <div class="sidebar-footer">
+            <div class="help-card">
+                <p>Need help with the platform?</p>
+                <a href="#" class="btn btn-primary btn-sm" style="width:100%">Get Support</a>
+            </div>
+            ${user ? `<a href="#" onclick="logout()" class="nav-item" style="color:var(--danger); padding:0; justify-content:center;"><i class="ph ph-sign-out"></i> <span>Sign Out</span></a>` : ''}
         </div>
     `;
 
     // Highlight active link
     const currentPath = window.location.pathname;
-    document.querySelectorAll('.nav-links a').forEach(link => {
+    document.querySelectorAll('.nav-item').forEach(link => {
         if (link.getAttribute('href') === currentPath) {
             link.classList.add('active');
         }
     });
 }
 
+function renderTopbar(title = 'Dashboard') {
+    const user = getUser();
+    const topbar = document.getElementById('topbar');
+    if (!topbar) return;
+
+    let userInfo = '';
+    if (user) {
+        userInfo = `
+            <div class="user-profile">
+                <div class="user-info" style="text-align: right;">
+                    <span class="user-name">${user.name}</span>
+                    <span class="user-role">${user.role === 'admin' ? 'Administrator' : user.role === 'department' ? user.dept_name || 'Department' : 'Citizen'}</span>
+                </div>
+                <div class="user-avatar">${user.name.charAt(0).toUpperCase()}</div>
+            </div>
+        `;
+    } else {
+        userInfo = `
+            <div class="user-profile" style="border:none;">
+                <a href="/login.html" class="btn btn-outline btn-sm">Sign In</a>
+                <a href="/register.html" class="btn btn-primary btn-sm" style="margin-left: 8px;">Register</a>
+            </div>
+        `;
+    }
+
+    topbar.innerHTML = `
+        <div class="topbar-left" style="flex:1;">
+            <button class="mobile-menu-btn" onclick="toggleMobileNav()">
+                <i class="ph ph-list"></i>
+            </button>
+            <h1 class="page-title">${title === 'Dashboard' ? `Welcome back, ${user ? user.name.split(' ')[0] : 'Admin'} 👋` : title}</h1>
+        </div>
+        ${title === 'Dashboard' ? `
+        <div class="topbar-center" style="flex:1; display:flex; justify-content:center;">
+            <div class="topbar-search">
+                <i class="ph ph-magnifying-glass"></i>
+                <input type="text" placeholder="Search complaints, categories...">
+            </div>
+        </div>
+        ` : ''}
+        <div class="topbar-right" style="flex:1; justify-content:flex-end;">
+            <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme">
+                <i class="ph ph-moon"></i>
+            </button>
+            ${user ? `<button class="notification-bell"><i class="ph ph-bell"></i></button>` : ''}
+            ${userInfo}
+        </div>
+    `;
+}
+
 function toggleMobileNav() {
-    document.getElementById('navLinks')?.classList.toggle('open');
+    const sidebar = document.getElementById('sidebar');
+    if (!sidebar) return;
+    
+    let overlay = document.querySelector('.sidebar-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.className = 'sidebar-overlay';
+        document.body.appendChild(overlay);
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('active');
+        });
+    }
+    
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('active', sidebar.classList.contains('open'));
+}
+
+// Theme handling
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    updateThemeIcon();
+}
+
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+    
+    const icon = document.querySelector('.theme-toggle i');
+    if (icon) {
+        icon.style.transform = 'rotate(360deg) scale(0)';
+        icon.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+        setTimeout(() => {
+            updateThemeIcon();
+            icon.style.transform = 'rotate(0deg) scale(1)';
+        }, 200);
+    } else {
+        updateThemeIcon();
+    }
+}
+
+function updateThemeIcon() {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const btn = document.querySelector('.theme-toggle i');
+    if (btn) {
+        btn.className = isDark ? 'ph ph-sun' : 'ph ph-moon';
+    }
 }
 
 // ============================================
@@ -251,11 +323,15 @@ function formatDateTime(dateStr) {
     return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
-// Scroll navbar effect
+// Scroll topbar effect
 window.addEventListener('scroll', () => {
-    const navbar = document.getElementById('navbar');
-    if (navbar) {
-        navbar.classList.toggle('scrolled', window.scrollY > 20);
+    const topbar = document.getElementById('topbar');
+    if (topbar) {
+        if (window.scrollY > 20) {
+            topbar.style.boxShadow = 'var(--shadow-sm)';
+        } else {
+            topbar.style.boxShadow = 'none';
+        }
     }
 });
 
@@ -274,7 +350,135 @@ async function loadAreas(selectId) {
     }
 }
 
-// Initialize navbar on all pages
+// Premium Skeleton Loader Engine
+function showSkeleton(containerId, type = 'table', count = 3) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    let html = '';
+    if (type === 'table') {
+        html = `
+            <div class="table-container" style="border:none; border-radius:0;">
+                <table style="width:100%;">
+                    <thead>
+                        <tr>
+                            <th style="padding-left:24px; width:40%;"><div class="skeleton" style="width:80px; height:12px;"></div></th>
+                            <th><div class="skeleton" style="width:60px; height:12px;"></div></th>
+                            <th><div class="skeleton" style="width:60px; height:12px;"></div></th>
+                            <th><div class="skeleton" style="width:80px; height:12px;"></div></th>
+                            <th style="padding-right:24px; text-align:right;"><div class="skeleton" style="width:50px; height:12px; display:inline-block;"></div></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${Array(count).fill(0).map(() => `
+                            <tr>
+                                <td style="padding-left:24px;">
+                                    <div style="display:flex; align-items:center; gap:12px;">
+                                        <div class="skeleton" style="width:32px; height:32px; border-radius:50%;"></div>
+                                        <div style="flex:1;">
+                                            <div class="skeleton skeleton-text" style="width:60%; height:12px;"></div>
+                                            <div class="skeleton skeleton-text" style="width:40%; height:10px;"></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><div class="skeleton skeleton-text" style="width:70px; height:12px;"></div></td>
+                                <td><div class="skeleton skeleton-text" style="width:80px; height:12px;"></div></td>
+                                <td><div class="skeleton" style="width:70px; height:20px; border-radius:10px;"></div></td>
+                                <td style="padding-right:24px; text-align:right;"><div class="skeleton" style="width:80px; height:28px; border-radius:6px; display:inline-block;"></div></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    } else if (type === 'cards') {
+        html = `
+            <div class="grid-4" style="margin-bottom:24px;">
+                ${Array(count).fill(0).map(() => `
+                    <div class="card skeleton-card">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                            <div class="skeleton" style="width:30%; height:12px;"></div>
+                            <div class="skeleton" style="width:36px; height:36px; border-radius:50%;"></div>
+                        </div>
+                        <div class="skeleton" style="width:50%; height:32px; margin-bottom:12px;"></div>
+                        <div class="skeleton" style="width:40%; height:12px;"></div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    } else if (type === 'chart') {
+        html = `
+            <div class="card" style="padding:24px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                    <div class="skeleton" style="width:140px; height:16px;"></div>
+                    <div class="skeleton" style="width:60px; height:16px;"></div>
+                </div>
+                <div class="skeleton skeleton-chart"></div>
+            </div>
+        `;
+    }
+    container.innerHTML = html;
+}
+
+// Numeric Value Animator for Premium SaaS stat cards
+function animateValue(id, start, end, duration) {
+    const obj = document.getElementById(id);
+    if (!obj) return;
+    let startTimestamp = null;
+    const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        obj.innerHTML = Math.floor(progress * (end - start) + start);
+        if (progress < 1) {
+            window.requestAnimationFrame(step);
+        }
+    };
+    window.requestAnimationFrame(step);
+}
+
+// Intersection Observer for Scroll-triggered Entry Animations
+function initScrollAnimations() {
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('fade-in-up');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.05 });
+    
+    document.querySelectorAll('[data-animate]').forEach(el => {
+        observer.observe(el);
+    });
+}
+
+// Initialize on all pages
 document.addEventListener('DOMContentLoaded', () => {
-    renderNavbar();
+    initTheme();
+    renderSidebar();
+    
+    let title = 'Dashboard';
+    const path = window.location.pathname;
+    if (path.includes('hotspots')) title = 'Hotspot Detection';
+    else if (path.includes('performance')) title = 'Performance Report';
+    else if (path.includes('my-complaints')) title = 'My Complaints';
+    else if (path.includes('complaint-form')) title = 'File a Complaint';
+    else if (path === '/' || path.includes('index')) title = 'Civic Intelligence';
+    
+    renderTopbar(title);
+    
+    // Stagger slide-in animations for nav links
+    document.querySelectorAll('.sidebar-nav .nav-item').forEach((item, idx) => {
+        item.style.animation = `fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards`;
+        item.style.animationDelay = `${idx * 0.06}s`;
+        item.style.opacity = '0';
+    });
+
+    // Content area fade in transition
+    const mainContent = document.querySelector('.main-content');
+    if (mainContent) {
+        mainContent.classList.add('fade-in-up');
+    }
+    
+    initScrollAnimations();
 });

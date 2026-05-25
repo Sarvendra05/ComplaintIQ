@@ -3,105 +3,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ComplaintIQ Admin Dashboard - Track smart city municipal complaints, dispatch tasks to departments, and analyze operational performance.">
     <title>Admin Dashboard - ComplaintIQ</title>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
     <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
-    <nav class="navbar" id="navbar"></nav>
+    <div class="app-layout">
+        <nav class="sidebar" id="sidebar"></nav>
 
-    <div class="page-content">
-        <div class="container">
-            <div class="page-header">
-                <h1 class="page-title"><i class="ph-fill ph-shield-check" style="color:var(--primary);"></i> Admin Dashboard</h1>
-                <p class="page-subtitle">Manage complaints, assign departments, and view analytics</p>
-            </div>
+        <div class="main-content">
+            <header class="topbar" id="topbar"></header>
+            
+            <div class="page-container">
+                <div style="margin-bottom: 24px;">
+                    <p style="color:var(--text-secondary); font-size: 1rem;">Manage complaints, assign departments, and view analytics</p>
+                </div>
 
             <!-- Stats Cards -->
             <div class="grid-4" id="statsGrid" style="margin-bottom:24px;">
-                <div class="stat-card primary">
-                    <div class="stat-icon"><i class="ph ph-clipboard-text"></i></div>
-                    <div class="stat-content">
-                        <div class="stat-value" id="statTotal">—</div>
+                <div class="stat-card">
+                    <div class="stat-card-header">
                         <div class="stat-label">Total Complaints</div>
+                        <div class="stat-icon primary"><i class="ph ph-clipboard-text"></i></div>
                     </div>
+                    <div class="stat-value" id="statTotal">—</div>
+                    <div class="stat-trend up"><i class="ph ph-trend-up"></i> 8.2% since last month</div>
+                    <div class="sparkline-container"><canvas id="sparklineTotal"></canvas></div>
                 </div>
-                <div class="stat-card warning">
-                    <div class="stat-icon"><i class="ph ph-hourglass-high"></i></div>
-                    <div class="stat-content">
-                        <div class="stat-value" id="statPending">—</div>
-                        <div class="stat-label">Pending</div>
-                    </div>
-                </div>
-                <div class="stat-card success">
-                    <div class="stat-icon"><i class="ph ph-check-circle"></i></div>
-                    <div class="stat-content">
-                        <div class="stat-value" id="statResolved">—</div>
+                <div class="stat-card">
+                    <div class="stat-card-header">
                         <div class="stat-label">Resolved</div>
+                        <div class="stat-icon success"><i class="ph ph-check-circle"></i></div>
+                    </div>
+                    <div class="stat-value" id="statResolved">—</div>
+                    <div class="stat-trend up"><i class="ph ph-trend-up"></i> 5.4% since last month</div>
+                    <div class="sparkline-container"><canvas id="sparklineResolved"></canvas></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div class="stat-label">Pending</div>
+                        <div class="stat-icon warning"><i class="ph ph-hourglass-high"></i></div>
+                    </div>
+                    <div class="stat-value" id="statPending">—</div>
+                    <div class="stat-trend down"><i class="ph ph-trend-down"></i> 2.1% since last month</div>
+                    <div class="sparkline-container"><canvas id="sparklinePending"></canvas></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div class="stat-label">Avg Resolution Time</div>
+                        <div class="stat-icon info"><i class="ph ph-clock"></i></div>
+                    </div>
+                    <div class="stat-value" id="statAvgTime">2.4d</div>
+                    <div class="stat-trend up"><i class="ph ph-trend-down"></i> 12% since last month</div>
+                    <div class="sparkline-container"><canvas id="sparklineAvgTime"></canvas></div>
+                </div>
+            </div>
+
+            <!-- Main Analytics Grid -->
+            <div class="analytics-grid">
+                <!-- Line Chart -->
+                <div class="col-span-8 chart-card">
+                    <div class="chart-header">
+                        <span class="chart-title">Complaint Dynamics</span>
+                        <select class="form-control" style="width: auto; padding: 4px 30px 4px 10px; font-size: 0.85rem;"><option>2026</option><option>2025</option></select>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="dynamicsChart"></canvas>
                     </div>
                 </div>
-                <div class="stat-card danger">
-                    <div class="stat-icon"><i class="ph ph-warning-circle"></i></div>
-                    <div class="stat-content">
-                        <div class="stat-value" id="statEscalated">—</div>
-                        <div class="stat-label">Escalated</div>
+
+                <!-- Doughnut Chart -->
+                <div class="col-span-4 chart-card">
+                    <div class="chart-header">
+                        <span class="chart-title">Categories Overview</span>
+                        <button class="btn btn-outline btn-sm" style="border:none; padding:4px;"><i class="ph ph-dots-three"></i></button>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Map Section -->
+                <div class="col-span-6 chart-card" style="padding:0; overflow:hidden; min-height:400px; display:flex; flex-direction:column;">
+                    <div class="chart-header" style="padding: 24px 24px 0 24px; margin-bottom:0;">
+                        <span class="chart-title">Complaint Hotspots</span>
+                        <a href="/hotspots.html" style="font-size: 0.85rem; font-weight: 500;">View Full Map</a>
+                    </div>
+                    <div class="map-container" id="indiaMap" style="flex:1; border-radius:0;"></div>
+                </div>
+
+                <!-- Bar Chart -->
+                <div class="col-span-6 chart-card">
+                    <div class="chart-header">
+                        <span class="chart-title">Department Performance</span>
+                        <select class="form-control" style="width: auto; padding: 4px 30px 4px 10px; font-size: 0.85rem;"><option>This Month</option><option>Last Month</option></select>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="deptPerformanceChart"></canvas>
                     </div>
                 </div>
             </div>
 
-            <!-- Quick Links -->
-            <div class="grid-2" style="margin-bottom:24px;">
-                <a href="/hotspots.html" class="card" style="text-decoration:none; display:flex; align-items:center; gap:16px;">
-                    <div style="font-size:3rem; color:var(--primary-light); line-height:1;"><i class="ph ph-map-trifold"></i></div>
-                    <div>
-                        <h3 style="margin-bottom:4px;">Hotspot Detection</h3>
-                        <p style="color:var(--text-secondary); font-size:0.9rem;">View areas with highest complaints and trends</p>
-                    </div>
-                </a>
-                <a href="/performance.html" class="card" style="text-decoration:none; display:flex; align-items:center; gap:16px;">
-                    <div style="font-size:3rem; color:var(--success); line-height:1;"><i class="ph ph-trend-up"></i></div>
-                    <div>
-                        <h3 style="margin-bottom:4px;">Performance Report</h3>
-                        <p style="color:var(--text-secondary); font-size:0.9rem;">Department rankings and resolution analytics</p>
-                    </div>
-                </a>
-            </div>
-
-            <!-- Filters -->
-            <div class="filters-bar">
-                <input type="text" class="form-control" id="filterSearch" placeholder="Search complaints...">
-                <select class="form-control" id="filterArea">
-                    <option value="">All Areas</option>
-                </select>
-                <select class="form-control" id="filterCategory">
-                    <option value="">All Categories</option>
-                    <option value="Road">Road</option>
-                    <option value="Water">Water</option>
-                    <option value="Garbage">Garbage</option>
-                    <option value="Light">Light</option>
-                    <option value="Drainage">Drainage</option>
-                    <option value="Other">Other</option>
-                </select>
-                <select class="form-control" id="filterStatus">
-                    <option value="">All Status</option>
-                    <option value="Pending">Pending</option>
-                    <option value="In Progress">In Progress</option>
-                    <option value="Resolved">Resolved</option>
-                    <option value="Escalated">Escalated</option>
-                </select>
-                <button class="btn btn-primary" onclick="loadComplaints()">Filter</button>
-                <button class="btn btn-secondary" onclick="clearFilters()">Clear</button>
-            </div>
-
-            <!-- Complaints Table -->
-            <div class="card">
-                <div class="card-header">
-                    <span class="card-title">All Complaints</span>
-                    <span class="badge badge-category" id="complaintCount">0 results</span>
+            <!-- Recent Complaints Table -->
+            <div class="card" style="padding:0; overflow:hidden;">
+                <div class="card-header" style="padding: 24px 24px 0 24px; margin-bottom: 16px;">
+                    <span class="card-title">Recent Complaints</span>
+                    <button class="btn btn-outline btn-sm" onclick="loadComplaints()"><i class="ph ph-arrows-clockwise"></i> Refresh</button>
                 </div>
                 <div id="complaintsContainer">
                     <div class="spinner"></div>
                 </div>
+            </div>
             </div>
         </div>
     </div>
@@ -154,17 +170,121 @@
             if (!requireAuth(['admin'])) return;
             loadStats();
             loadComplaints();
-            loadAreas('filterArea');
             loadDepartments();
+            setTimeout(() => {
+                initCharts();
+                initMap();
+            }, 500);
         });
+
+        const brandColors = {
+            primary: '#4F46E5',
+            success: '#10B981',
+            warning: '#F59E0B',
+            danger: '#EF4444',
+            info: '#3b82f6',
+            grid: 'rgba(148, 163, 184, 0.1)',
+            text: '#94A3B8'
+        };
+
+        function initCharts() {
+            // Sparklines
+            const sparkOpts = { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false},tooltip:{enabled:false}}, scales:{x:{display:false},y:{display:false}}, elements:{point:{radius:0}} };
+            new Chart(document.getElementById('sparklineTotal'), { type:'line', data:{ labels:[1,2,3,4,5,6], datasets:[{ data:[10,15,13,20,18,25], borderColor:brandColors.primary, borderWidth:2, tension:0.4 }] }, options:sparkOpts });
+            new Chart(document.getElementById('sparklineResolved'), { type:'line', data:{ labels:[1,2,3,4,5,6], datasets:[{ data:[5,8,12,15,16,22], borderColor:brandColors.success, borderWidth:2, tension:0.4 }] }, options:sparkOpts });
+            new Chart(document.getElementById('sparklinePending'), { type:'line', data:{ labels:[1,2,3,4,5,6], datasets:[{ data:[15,12,14,10,12,8], borderColor:brandColors.warning, borderWidth:2, tension:0.4 }] }, options:sparkOpts });
+            new Chart(document.getElementById('sparklineAvgTime'), { type:'line', data:{ labels:[1,2,3,4,5,6], datasets:[{ data:[3.5,3.2,3.0,2.8,2.5,2.4], borderColor:brandColors.info, borderWidth:2, tension:0.4 }] }, options:sparkOpts });
+
+            // Dynamics Line Chart
+            new Chart(document.getElementById('dynamicsChart'), {
+                type: 'line',
+                data: {
+                    labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+                    datasets: [
+                        { label:'Total', data:[45,52,38,65,70,85,90,75,60,80,95,110], borderColor:brandColors.primary, backgroundColor:'rgba(79,70,229,0.1)', borderWidth:3, tension:0.4, fill:true },
+                        { label:'Resolved', data:[30,40,35,50,60,70,80,65,55,70,85,95], borderColor:brandColors.success, borderWidth:3, tension:0.4 }
+                    ]
+                },
+                options: {
+                    responsive:true, maintainAspectRatio:false,
+                    plugins: { legend: { display:false } },
+                    scales: {
+                        y: { beginAtZero:true, grid:{color:brandColors.grid}, ticks:{color:brandColors.text} },
+                        x: { grid:{display:false}, ticks:{color:brandColors.text} }
+                    }
+                }
+            });
+
+            // Category Doughnut
+            new Chart(document.getElementById('categoryChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Road', 'Water', 'Garbage', 'Streetlight', 'Drainage'],
+                    datasets: [{
+                        data: [35, 25, 20, 10, 10],
+                        backgroundColor: [brandColors.primary, brandColors.info, brandColors.success, brandColors.warning, brandColors.danger],
+                        borderWidth: 0,
+                        cutout: '75%'
+                    }]
+                },
+                options: {
+                    responsive:true, maintainAspectRatio:false,
+                    plugins: { legend: { position:'bottom', labels:{color:brandColors.text, padding:20, usePointStyle:true} } }
+                }
+            });
+
+            // Department Performance Bar
+            new Chart(document.getElementById('deptPerformanceChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Road', 'Water', 'Sanitation', 'Electrical'],
+                    datasets: [{
+                        data: [85, 92, 78, 95],
+                        backgroundColor: brandColors.primary,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive:true, maintainAspectRatio:false,
+                    plugins: { legend: { display:false } },
+                    scales: {
+                        y: { beginAtZero:true, max:100, grid:{color:brandColors.grid}, ticks:{color:brandColors.text, callback:v=>v+'%'} },
+                        x: { grid:{display:false}, ticks:{color:brandColors.text} }
+                    }
+                }
+            });
+        }
+
+        function initMap() {
+            const map = L.map('indiaMap').setView([20.5937, 78.9629], 4);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+            }).addTo(map);
+
+            const hotspots = [
+                { loc: [19.0760, 72.8777], city: 'Mumbai', intensity: 100 },
+                { loc: [28.7041, 77.1025], city: 'Delhi', intensity: 85 },
+                { loc: [12.9716, 77.5946], city: 'Bangalore', intensity: 70 },
+                { loc: [13.0827, 80.2707], city: 'Chennai', intensity: 60 }
+            ];
+
+            hotspots.forEach(h => {
+                L.circle(h.loc, {
+                    color: brandColors.danger,
+                    fillColor: brandColors.danger,
+                    fillOpacity: 0.5,
+                    radius: h.intensity * 1000
+                }).addTo(map).bindPopup(`<b>${h.city}</b><br>High Complaint Density`);
+            });
+        }
 
         async function loadStats() {
             try {
                 const stats = await apiRequest('/admin/stats');
-                document.getElementById('statTotal').textContent = stats.total;
-                document.getElementById('statPending').textContent = stats.pending;
-                document.getElementById('statResolved').textContent = stats.resolved;
-                document.getElementById('statEscalated').textContent = stats.escalated;
+                animateValue('statTotal', 0, stats.total, 1000);
+                animateValue('statPending', 0, stats.pending, 1000);
+                animateValue('statResolved', 0, stats.resolved, 1000);
+                animateValue('statEscalated', 0, stats.escalated, 1000);
             } catch (err) {
                 console.error('Failed to load stats:', err);
             }
@@ -184,6 +304,7 @@
         }
 
         async function loadComplaints() {
+            showSkeleton('complaintsContainer', 'table', 6);
             try {
                 const params = new URLSearchParams();
                 const search = document.getElementById('filterSearch').value;
@@ -204,57 +325,42 @@
                     container.innerHTML = `
                         <div class="empty-state">
                             <div class="empty-state-icon"><i class="ph ph-tray"></i></div>
-                            <p>No complaints found matching filters</p>
+                            <p>No recent complaints</p>
                         </div>
                     `;
                     return;
                 }
 
                 container.innerHTML = `
-                    <div class="table-container">
-                        <table>
+                    <div class="table-container" style="border:none; border-radius:0;">
+                        <table style="width:100%;">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
-                                    <th>Title</th>
-                                    <th>Citizen</th>
-                                    <th>Category</th>
+                                    <th style="padding-left:24px;">Profile</th>
                                     <th>Area</th>
-                                    <th>Priority</th>
-                                    <th>Proof</th>
-                                    <th>Status</th>
                                     <th>Date</th>
-                                    <th>Dept</th>
-                                    <th>Action</th>
+                                    <th>Status</th>
+                                    <th>Priority</th>
+                                    <th style="padding-right:24px;">Department</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                ${complaints.map(c => `
+                                ${complaints.slice(0,6).map(c => `
                                     <tr>
-                                        <td>#${c.complaint_id}</td>
-                                        <td style="max-width:180px;">${c.title}</td>
-                                        <td>${c.citizen_name}</td>
-                                        <td><span class="badge badge-category">${c.category}</span></td>
-                                        <td>${c.area_name}</td>
-                                        <td>${getPriorityBadge(c.priority)}</td>
-                                        <td>
-                                            ${c.image_path ? `
-                                                <div class="proof-thumbnail-wrapper" style="width: 40px; height: 40px;">
-                                                    <img src="${c.image_path}" class="proof-thumbnail" style="width: 40px; height: 40px; border-radius: 4px;" onclick="openImageModal('${c.image_path}')" title="View Proof">
+                                        <td style="padding-left:24px;">
+                                            <div style="display:flex; align-items:center; gap:12px;">
+                                                <div class="table-avatar">${c.citizen_name ? c.citizen_name.charAt(0).toUpperCase() : 'U'}</div>
+                                                <div>
+                                                    <div style="font-weight:600; color:var(--text-primary); font-size:0.95rem;">${c.citizen_name || 'Unknown'}</div>
+                                                    <div style="font-size:0.8rem; color:var(--text-secondary); max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${c.title}</div>
                                                 </div>
-                                            ` : '<span style="color:var(--text-muted)">—</span>'}
+                                            </div>
                                         </td>
+                                        <td style="color:var(--text-secondary);">${c.area_name || '—'}</td>
+                                        <td style="color:var(--text-secondary);">${formatDate(c.date)}</td>
                                         <td>${getStatusBadge(c.status)}</td>
-                                        <td>${formatDate(c.date)}</td>
-                                        <td>${c.dept_name || '<span style="color:var(--text-muted)">—</span>'}</td>
-                                        <td>
-                                            ${!c.dept_id
-                                                ? `<button class="btn ${c.status === 'Escalated' ? 'btn-danger' : 'btn-primary'} btn-sm" onclick="openAssignModal(${c.complaint_id}, '${c.title.replace(/'/g, "\\'")}', ${c.status === 'Escalated'})">${c.status === 'Escalated' ? 'Reassign' : 'Assign'}</button>`
-                                                : (c.reopen_count > 0 && c.status === 'In Progress')
-                                                    ? `<button class="btn btn-danger btn-sm" onclick="openAssignModal(${c.complaint_id}, '${c.title.replace(/'/g, "\\'")}', true)">Reassign</button>`
-                                                    : ''
-                                            }
-                                        </td>
+                                        <td>${getPriorityBadge(c.priority)}</td>
+                                        <td style="padding-right:24px; color:var(--text-primary); font-weight:500;">${c.dept_name || '—'}</td>
                                     </tr>
                                 `).join('')}
                             </tbody>
@@ -262,7 +368,7 @@
                     </div>
                 `;
             } catch (err) {
-                showToast('Failed to load complaints', 'error');
+                showToast('Failed to load recent complaints', 'error');
             }
         }
 
