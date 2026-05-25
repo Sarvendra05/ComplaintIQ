@@ -307,10 +307,10 @@
             showSkeleton('complaintsContainer', 'table', 6);
             try {
                 const params = new URLSearchParams();
-                const search = document.getElementById('filterSearch').value;
-                const area = document.getElementById('filterArea').value;
-                const category = document.getElementById('filterCategory').value;
-                const status = document.getElementById('filterStatus').value;
+                const search = document.getElementById('filterSearch')?.value;
+                const area = document.getElementById('filterArea')?.value;
+                const category = document.getElementById('filterCategory')?.value;
+                const status = document.getElementById('filterStatus')?.value;
 
                 if (search) params.set('search', search);
                 if (area) params.set('area_id', area);
@@ -319,7 +319,8 @@
 
                 const complaints = await apiRequest(`/admin/complaints?${params.toString()}`);
                 const container = document.getElementById('complaintsContainer');
-                document.getElementById('complaintCount').textContent = `${complaints.length} results`;
+                const countEl = document.getElementById('complaintCount');
+                if (countEl) countEl.textContent = `${complaints.length} results`;
 
                 if (!complaints || complaints.length === 0) {
                     container.innerHTML = `
@@ -373,10 +374,14 @@
         }
 
         function clearFilters() {
-            document.getElementById('filterSearch').value = '';
-            document.getElementById('filterArea').value = '';
-            document.getElementById('filterCategory').value = '';
-            document.getElementById('filterStatus').value = '';
+            const searchEl = document.getElementById('filterSearch');
+            const areaEl = document.getElementById('filterArea');
+            const categoryEl = document.getElementById('filterCategory');
+            const statusEl = document.getElementById('filterStatus');
+            if (searchEl) searchEl.value = '';
+            if (areaEl) areaEl.value = '';
+            if (categoryEl) categoryEl.value = '';
+            if (statusEl) statusEl.value = '';
             loadComplaints();
         }
 
