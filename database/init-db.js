@@ -88,8 +88,8 @@ async function init() {
         console.log(' ✔ Database initialized successfully!');
         console.log('════════════════════════════════════════════');
         console.log('\nDefault credentials:');
-        console.log('  Admin    → username: admin      | password: admin123');
-        console.log('  Officers → username: *_officer   | password: officer123');
+        console.log('  Admin    → username: admin      | password: admin@123');
+        console.log('  Officers → username: *_officer   | password: officer@123');
         console.log('  Citizens → email: aarav/diya/... | password: citizen123\n');
 
     } catch (err) {
