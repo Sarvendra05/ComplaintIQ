@@ -39,7 +39,7 @@ INSERT INTO admin (username, password) VALUES
 ('admin', '$2a$10$7n96pByqFKBfH1Y1sH.1aOn3YMz9oJIWnmlBNERTxQ2lkGtb7sOpS');
 
 -- ============================================
--- DEPARTMENT OFFICERS (password: officer123)
+-- DEPARTMENT OFFICERS (password: officer@123)
 -- ============================================
 INSERT INTO dept_officer (dept_id, username, name, password) VALUES
 (1, 'road_officer', 'Rajesh Kumar', '$2a$10$HmyTKwltGS9rCS8v93P53.WhY2T5f/QGjUJovQjQI14CmTX1smDHm'),
