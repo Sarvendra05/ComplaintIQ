@@ -33,7 +33,7 @@ INSERT INTO area (area_name) VALUES
 ('Zone L - Lake Area');
 
 -- ============================================
--- ADMIN (password: admin123)
+-- ADMIN (password: admin@123)
 -- ============================================
 INSERT INTO admin (username, password) VALUES
 ('admin', '$2a$10$7n96pByqFKBfH1Y1sH.1aOn3YMz9oJIWnmlBNERTxQ2lkGtb7sOpS');
