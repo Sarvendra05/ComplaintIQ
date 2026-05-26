@@ -31,7 +31,7 @@
                         <div class="stat-icon primary"><i class="ph ph-clipboard-text"></i></div>
                     </div>
                     <div class="stat-value" id="statTotal">—</div>
-                    <div class="stat-trend up"><i class="ph ph-trend-up"></i> 8.2% since last month</div>
+                    <div class="stat-trend up" id="trendTotal"><i class="ph ph-trend-up"></i> 8.2% since last month</div>
                     <div class="sparkline-container"><canvas id="sparklineTotal"></canvas></div>
                 </div>
                 <div class="stat-card">
@@ -40,7 +40,7 @@
                         <div class="stat-icon success"><i class="ph ph-check-circle"></i></div>
                     </div>
                     <div class="stat-value" id="statResolved">—</div>
-                    <div class="stat-trend up"><i class="ph ph-trend-up"></i> 5.4% since last month</div>
+                    <div class="stat-trend up" id="trendResolved"><i class="ph ph-trend-up"></i> 5.4% since last month</div>
                     <div class="sparkline-container"><canvas id="sparklineResolved"></canvas></div>
                 </div>
                 <div class="stat-card">
@@ -49,7 +49,7 @@
                         <div class="stat-icon warning"><i class="ph ph-hourglass-high"></i></div>
                     </div>
                     <div class="stat-value" id="statPending">—</div>
-                    <div class="stat-trend down"><i class="ph ph-trend-down"></i> 2.1% since last month</div>
+                    <div class="stat-trend down" id="trendPending"><i class="ph ph-trend-down"></i> 2.1% since last month</div>
                     <div class="sparkline-container"><canvas id="sparklinePending"></canvas></div>
                 </div>
                 <div class="stat-card">
@@ -58,7 +58,7 @@
                         <div class="stat-icon info"><i class="ph ph-clock"></i></div>
                     </div>
                     <div class="stat-value" id="statAvgTime">2.4d</div>
-                    <div class="stat-trend up"><i class="ph ph-trend-down"></i> 12% since last month</div>
+                    <div class="stat-trend up" id="trendAvgTime"><i class="ph ph-trend-down"></i> 12% since last month</div>
                     <div class="sparkline-container"><canvas id="sparklineAvgTime"></canvas></div>
                 </div>
             </div>
@@ -166,15 +166,15 @@
         let departments = [];
         let currentComplaintId = null;
 
+        let charts = {};
+        let dashboardMap = null;
+        let mapCircles = [];
+
         document.addEventListener('DOMContentLoaded', () => {
             if (!requireAuth(['admin'])) return;
             loadStats();
             loadComplaints();
             loadDepartments();
-            setTimeout(() => {
-                initCharts();
-                initMap();
-            }, 500);
         });
 
         const brandColors = {
@@ -187,104 +187,302 @@
             text: '#94A3B8'
         };
 
-        function initCharts() {
+        function renderCharts(stats) {
+            const hasData = stats && stats.total > 0;
+            
             // Sparklines
-            const sparkOpts = { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false},tooltip:{enabled:false}}, scales:{x:{display:false},y:{display:false}}, elements:{point:{radius:0}} };
-            new Chart(document.getElementById('sparklineTotal'), { type:'line', data:{ labels:[1,2,3,4,5,6], datasets:[{ data:[10,15,13,20,18,25], borderColor:brandColors.primary, borderWidth:2, tension:0.4 }] }, options:sparkOpts });
-            new Chart(document.getElementById('sparklineResolved'), { type:'line', data:{ labels:[1,2,3,4,5,6], datasets:[{ data:[5,8,12,15,16,22], borderColor:brandColors.success, borderWidth:2, tension:0.4 }] }, options:sparkOpts });
-            new Chart(document.getElementById('sparklinePending'), { type:'line', data:{ labels:[1,2,3,4,5,6], datasets:[{ data:[15,12,14,10,12,8], borderColor:brandColors.warning, borderWidth:2, tension:0.4 }] }, options:sparkOpts });
-            new Chart(document.getElementById('sparklineAvgTime'), { type:'line', data:{ labels:[1,2,3,4,5,6], datasets:[{ data:[3.5,3.2,3.0,2.8,2.5,2.4], borderColor:brandColors.info, borderWidth:2, tension:0.4 }] }, options:sparkOpts });
+            const sparkOpts = { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { legend: { display: false }, tooltip: { enabled: hasData } }, 
+                scales: { x: { display: false }, y: { display: false } }, 
+                elements: { point: { radius: 0 } } 
+            };
+
+            const trend = (stats.monthly_trend && stats.monthly_trend.length > 0) 
+                ? [...stats.monthly_trend].reverse() 
+                : [];
+
+            const sparkLabels = trend.length > 0 ? trend.map(t => t.month) : [1, 2, 3, 4, 5, 6];
+            const sparkTotalData = trend.length > 0 ? trend.map(t => t.total_complaints) : [];
+            const sparkResolvedData = trend.length > 0 ? trend.map(t => t.resolved) : [];
+            const sparkPendingData = trend.length > 0 ? trend.map(t => t.pending) : [];
+            const sparkAvgTimeData = trend.length > 0 ? trend.map(t => t.avg_res_time ? parseFloat((t.avg_res_time / 86400).toFixed(1)) : 0) : [];
+
+            // Draw sparklines
+            drawChart('sparklineTotal', 'line', {
+                labels: sparkLabels,
+                datasets: hasData ? [{ 
+                    data: sparkTotalData, 
+                    borderColor: brandColors.primary, 
+                    borderWidth: 2, 
+                    tension: 0.4 
+                }] : []
+            }, sparkOpts);
+
+            drawChart('sparklineResolved', 'line', {
+                labels: sparkLabels,
+                datasets: hasData ? [{ 
+                    data: sparkResolvedData, 
+                    borderColor: brandColors.success, 
+                    borderWidth: 2, 
+                    tension: 0.4 
+                }] : []
+            }, sparkOpts);
+
+            drawChart('sparklinePending', 'line', {
+                labels: sparkLabels,
+                datasets: hasData ? [{ 
+                    data: sparkPendingData, 
+                    borderColor: brandColors.warning, 
+                    borderWidth: 2, 
+                    tension: 0.4 
+                }] : []
+            }, sparkOpts);
+
+            drawChart('sparklineAvgTime', 'line', {
+                labels: sparkLabels,
+                datasets: hasData ? [{ 
+                    data: sparkAvgTimeData, 
+                    borderColor: brandColors.info, 
+                    borderWidth: 2, 
+                    tension: 0.4 
+                }] : []
+            }, sparkOpts);
 
             // Dynamics Line Chart
-            new Chart(document.getElementById('dynamicsChart'), {
-                type: 'line',
-                data: {
-                    labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
-                    datasets: [
-                        { label:'Total', data:[45,52,38,65,70,85,90,75,60,80,95,110], borderColor:brandColors.primary, backgroundColor:'rgba(79,70,229,0.1)', borderWidth:3, tension:0.4, fill:true },
-                        { label:'Resolved', data:[30,40,35,50,60,70,80,65,55,70,85,95], borderColor:brandColors.success, borderWidth:3, tension:0.4 }
-                    ]
-                },
-                options: {
-                    responsive:true, maintainAspectRatio:false,
-                    plugins: { legend: { display:false } },
-                    scales: {
-                        y: { beginAtZero:true, grid:{color:brandColors.grid}, ticks:{color:brandColors.text} },
-                        x: { grid:{display:false}, ticks:{color:brandColors.text} }
-                    }
+            const dynamicsLabels = trend.map(t => {
+                const [year, month] = t.month.split('-');
+                const d = new Date(year, parseInt(month) - 1, 1);
+                return d.toLocaleString('default', { month: 'short' });
+            });
+            const dynamicsTotalData = trend.map(t => t.total_complaints);
+            const dynamicsResolvedData = trend.map(t => t.resolved);
+
+            drawChart('dynamicsChart', 'line', {
+                labels: dynamicsLabels,
+                datasets: hasData ? [
+                    { label: 'Total', data: dynamicsTotalData, borderColor: brandColors.primary, backgroundColor: 'rgba(79,70,229,0.1)', borderWidth: 3, tension: 0.4, fill: true },
+                    { label: 'Resolved', data: dynamicsResolvedData, borderColor: brandColors.success, borderWidth: 3, tension: 0.4 }
+                ] : []
+            }, {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: brandColors.grid }, ticks: { color: brandColors.text, stepSize: 1 } },
+                    x: { grid: { display: false }, ticks: { color: brandColors.text } }
                 }
             });
 
             // Category Doughnut
-            new Chart(document.getElementById('categoryChart'), {
-                type: 'doughnut',
-                data: {
-                    labels: ['Road', 'Water', 'Garbage', 'Streetlight', 'Drainage'],
-                    datasets: [{
-                        data: [35, 25, 20, 10, 10],
-                        backgroundColor: [brandColors.primary, brandColors.info, brandColors.success, brandColors.warning, brandColors.danger],
-                        borderWidth: 0,
-                        cutout: '75%'
-                    }]
-                },
-                options: {
-                    responsive:true, maintainAspectRatio:false,
-                    plugins: { legend: { position:'bottom', labels:{color:brandColors.text, padding:20, usePointStyle:true} } }
+            const categories = stats.category_frequency || [];
+            const catColors = {
+                'Road': brandColors.primary,
+                'Water': brandColors.info,
+                'Garbage': brandColors.success,
+                'Light': brandColors.warning,
+                'Streetlight': brandColors.warning,
+                'Drainage': brandColors.danger,
+                'Other': '#8b5cf6'
+            };
+            const catLabels = categories.map(c => c.category);
+            const catData = categories.map(c => c.total_complaints);
+            const catBgColors = categories.map(c => catColors[c.category] || '#6366f1');
+
+            drawChart('categoryChart', 'doughnut', {
+                labels: catLabels,
+                datasets: hasData ? [{
+                    data: catData,
+                    backgroundColor: catBgColors,
+                    borderWidth: 0,
+                    cutout: '75%'
+                }] : []
+            }, {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { 
+                    legend: { 
+                        position: 'bottom', 
+                        labels: { color: brandColors.text, padding: 20, usePointStyle: true } 
+                    } 
                 }
             });
 
             // Department Performance Bar
-            new Chart(document.getElementById('deptPerformanceChart'), {
-                type: 'bar',
-                data: {
-                    labels: ['Road', 'Water', 'Sanitation', 'Electrical'],
-                    datasets: [{
-                        data: [85, 92, 78, 95],
-                        backgroundColor: brandColors.primary,
-                        borderRadius: 6
-                    }]
-                },
-                options: {
-                    responsive:true, maintainAspectRatio:false,
-                    plugins: { legend: { display:false } },
-                    scales: {
-                        y: { beginAtZero:true, max:100, grid:{color:brandColors.grid}, ticks:{color:brandColors.text, callback:v=>v+'%'} },
-                        x: { grid:{display:false}, ticks:{color:brandColors.text} }
-                    }
+            const deptPerf = stats.dept_performance || [];
+            const deptLabels = deptPerf.map(d => d.dept_name.substring(0, 15));
+            const deptData = deptPerf.map(d => d.total_assigned > 0 ? Math.round((d.resolved_count / d.total_assigned) * 100) : 0);
+
+            drawChart('deptPerformanceChart', 'bar', {
+                labels: deptLabels,
+                datasets: hasData ? [{
+                    data: deptData,
+                    backgroundColor: brandColors.primary,
+                    borderRadius: 6
+                }] : []
+            }, {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, max: 100, grid: { color: brandColors.grid }, ticks: { color: brandColors.text, callback: v => v + '%' } },
+                    x: { grid: { display: false }, ticks: { color: brandColors.text } }
                 }
             });
         }
 
-        function initMap() {
-            const map = L.map('indiaMap').setView([20.5937, 78.9629], 4);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-                attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
-            }).addTo(map);
+        function drawChart(canvasId, type, data, options) {
+            if (charts[canvasId]) {
+                charts[canvasId].destroy();
+            }
+            const ctx = document.getElementById(canvasId);
+            if (ctx) {
+                charts[canvasId] = new Chart(ctx, { type, data, options });
+            }
+        }
 
-            const hotspots = [
-                { loc: [19.0760, 72.8777], city: 'Mumbai', intensity: 100 },
-                { loc: [28.7041, 77.1025], city: 'Delhi', intensity: 85 },
-                { loc: [12.9716, 77.5946], city: 'Bangalore', intensity: 70 },
-                { loc: [13.0827, 80.2707], city: 'Chennai', intensity: 60 }
-            ];
+        function initMap(hotspotsData = []) {
+            if (!dashboardMap) {
+                dashboardMap = L.map('indiaMap').setView([28.6139, 77.2090], 11);
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                    attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+                }).addTo(dashboardMap);
+            }
 
-            hotspots.forEach(h => {
-                L.circle(h.loc, {
-                    color: brandColors.danger,
-                    fillColor: brandColors.danger,
-                    fillOpacity: 0.5,
-                    radius: h.intensity * 1000
-                }).addTo(map).bindPopup(`<b>${h.city}</b><br>High Complaint Density`);
+            mapCircles.forEach(c => dashboardMap.removeLayer(c));
+            mapCircles = [];
+
+            const ZONE_COORDINATES = {
+                'Zone A - Central Market': [28.6150, 77.2080],
+                'Zone B - Railway Station': [28.6415, 77.2200],
+                'Zone C - Industrial Area': [28.5850, 77.2400],
+                'Zone D - Residential North': [28.6600, 77.2100],
+                'Zone E - Residential South': [28.5500, 77.2100],
+                'Zone F - University Campus': [28.5840, 77.1630],
+                'Zone G - Hospital Road': [28.6180, 77.2150],
+                'Zone H - Bus Stand': [28.6250, 77.2300],
+                'Zone I - Old Town': [28.6560, 77.2350],
+                'Zone J - New Colony': [28.6300, 77.1800],
+                'Zone K - IT Park': [28.5300, 77.2600],
+                'Zone L - Lake Area': [28.6100, 77.1950]
+            };
+
+            hotspotsData.forEach(h => {
+                const loc = ZONE_COORDINATES[h.area_name];
+                if (loc && h.complaint_count > 0) {
+                    const circle = L.circle(loc, {
+                        color: brandColors.danger,
+                        fillColor: brandColors.danger,
+                        fillOpacity: 0.5,
+                        radius: Math.min(h.complaint_count * 300, 3000)
+                    }).addTo(dashboardMap).bindPopup(`<b>${h.area_name.split(' - ')[0]}</b><br>${h.complaint_count} Complaints`);
+                    mapCircles.push(circle);
+                }
             });
+        }
+
+        function updateTrend(elementId, current, previous, type = 'complaints') {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+
+            if (current === undefined || previous === undefined || previous === null || current === null || previous === 0) {
+                el.style.display = 'none';
+                return;
+            }
+
+            el.style.display = 'flex';
+            let change = 0;
+            if (type === 'time') {
+                // Avg resolution time: lower is better
+                change = ((previous - current) / previous) * 100;
+            } else {
+                change = ((current - previous) / previous) * 100;
+            }
+
+            const isPositive = change >= 0;
+            const percentStr = Math.abs(change).toFixed(1) + '%';
+            
+            if (type === 'time') {
+                if (change >= 0) {
+                    el.className = 'stat-trend down';
+                    el.innerHTML = `<i class="ph ph-trend-down"></i> ${percentStr} decrease since last month`;
+                    el.style.color = 'var(--success)';
+                } else {
+                    el.className = 'stat-trend up';
+                    el.innerHTML = `<i class="ph ph-trend-up"></i> ${percentStr} increase since last month`;
+                    el.style.color = 'var(--danger)';
+                }
+            } else {
+                if (isPositive) {
+                    el.className = 'stat-trend up';
+                    el.innerHTML = `<i class="ph ph-trend-up"></i> ${percentStr} since last month`;
+                    if (elementId.includes('Pending')) {
+                        el.style.color = 'var(--warning)';
+                    } else if (elementId.includes('Resolved')) {
+                        el.style.color = 'var(--success)';
+                    } else {
+                        el.style.color = 'var(--primary)';
+                    }
+                } else {
+                    el.className = 'stat-trend down';
+                    el.innerHTML = `<i class="ph ph-trend-down"></i> ${percentStr} since last month`;
+                    if (elementId.includes('Pending')) {
+                        el.style.color = 'var(--success)';
+                    } else if (elementId.includes('Resolved')) {
+                        el.style.color = 'var(--danger)';
+                    } else {
+                        el.style.color = 'var(--text-secondary)';
+                    }
+                }
+            }
         }
 
         async function loadStats() {
             try {
                 const stats = await apiRequest('/admin/stats');
-                animateValue('statTotal', 0, stats.total, 1000);
-                animateValue('statPending', 0, stats.pending, 1000);
-                animateValue('statResolved', 0, stats.resolved, 1000);
-                animateValue('statEscalated', 0, stats.escalated, 1000);
+                
+                if (!stats || stats.total === 0) {
+                    document.getElementById('statTotal').textContent = '0';
+                    document.getElementById('statResolved').textContent = '0';
+                    document.getElementById('statPending').textContent = '0';
+                    document.getElementById('statAvgTime').textContent = 'No data';
+
+                    // Hide trend tags
+                    ['trendTotal', 'trendResolved', 'trendPending', 'trendAvgTime'].forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) el.style.display = 'none';
+                    });
+                } else {
+                    animateValue('statTotal', 0, stats.total, 1000);
+                    animateValue('statPending', 0, stats.pending, 1000);
+                    animateValue('statResolved', 0, stats.resolved, 1000);
+                    
+                    if (stats.avg_resolution_time !== null && stats.avg_resolution_time !== undefined) {
+                        const days = stats.avg_resolution_time / 86400;
+                        document.getElementById('statAvgTime').textContent = days.toFixed(1) + 'd';
+                    } else {
+                        document.getElementById('statAvgTime').textContent = 'No data';
+                    }
+
+                    // Dynamically calculate and update trends
+                    const trend = stats.monthly_trend || [];
+                    if (trend.length >= 2) {
+                        const curr = trend[0];
+                        const prev = trend[1];
+
+                        updateTrend('trendTotal', curr.total_complaints, prev.total_complaints);
+                        updateTrend('trendResolved', parseInt(curr.resolved), parseInt(prev.resolved));
+                        updateTrend('trendPending', parseInt(curr.pending), parseInt(prev.pending));
+                        updateTrend('trendAvgTime', curr.avg_res_time, prev.avg_res_time, 'time');
+                    } else {
+                        // Not enough history, hide trends
+                        ['trendTotal', 'trendResolved', 'trendPending', 'trendAvgTime'].forEach(id => {
+                            const el = document.getElementById(id);
+                            if (el) el.style.display = 'none';
+                        });
+                    }
+                }
+
+                renderCharts(stats || { total: 0 });
+                initMap(stats ? (stats.hotspots || []) : []);
             } catch (err) {
                 console.error('Failed to load stats:', err);
             }
@@ -342,7 +540,8 @@
                                     <th>Date</th>
                                     <th>Status</th>
                                     <th>Priority</th>
-                                    <th style="padding-right:24px;">Department</th>
+                                    <th>Department</th>
+                                    <th style="padding-right:24px; text-align:right;">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -359,9 +558,20 @@
                                         </td>
                                         <td style="color:var(--text-secondary);">${c.area_name || '—'}</td>
                                         <td style="color:var(--text-secondary);">${formatDate(c.date)}</td>
-                                        <td>${getStatusBadge(c.status)}</td>
+                                        <td>
+                                            ${getStatusBadge(c.status)}
+                                            ${c.reopen_count > 0 ? `<div style="font-size:0.75rem; color:var(--warning); margin-top:4px;">Reopened (${c.reopen_count}/2)</div>` : ''}
+                                        </td>
                                         <td>${getPriorityBadge(c.priority)}</td>
-                                        <td style="padding-right:24px; color:var(--text-primary); font-weight:500;">${c.dept_name || '—'}</td>
+                                        <td style="color:var(--text-primary); font-weight:500;">${c.dept_name || '—'}</td>
+                                        <td style="padding-right:24px; text-align:right;">
+                                            ${!c.dept_id
+                                                ? `<button class="btn ${c.status === 'Escalated' ? 'btn-danger' : 'btn-primary'} btn-sm" onclick="openAssignModal(${c.complaint_id}, '${c.title.replace(/'/g, "\\'")}', ${c.status === 'Escalated'})">${c.status === 'Escalated' ? 'Reassign' : 'Assign'}</button>`
+                                                : (c.reopen_count > 0 && c.status === 'In Progress')
+                                                    ? `<button class="btn btn-danger btn-sm" onclick="openAssignModal(${c.complaint_id}, '${c.title.replace(/'/g, "\\'")}', true)">Reassign</button>`
+                                                    : ''
+                                            }
+                                        </td>
                                     </tr>
                                 `).join('')}
                             </tbody>

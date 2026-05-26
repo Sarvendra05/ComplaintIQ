@@ -53,8 +53,12 @@ async function init() {
         console.log('✔ Connected to MySQL.\n');
 
         // Enable Event Scheduler
-        await connection.query('SET GLOBAL event_scheduler = ON;');
-        console.log('✔ Event scheduler enabled.');
+        try {
+            await connection.query('SET GLOBAL event_scheduler = ON;');
+            console.log('✔ Event scheduler enabled.');
+        } catch (e) {
+            console.log('⚠ Could not set event_scheduler globally, skipping:', e.message);
+        }
 
         const dbDir = path.join(__dirname);
 

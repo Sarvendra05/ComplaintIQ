@@ -115,20 +115,20 @@
 
     <script src="/js/app.js"></script>
     <script>
-        // Central New Delhi coordinates mapping to the seeded zones
+        // Uttar Pradesh coordinates mapping to the seeded zones
         const ZONE_COORDINATES = {
-            'Zone A - Central Market': [28.6150, 77.2080],
-            'Zone B - Railway Station': [28.6415, 77.2200],
-            'Zone C - Industrial Area': [28.5850, 77.2400],
-            'Zone D - Residential North': [28.6600, 77.2100],
-            'Zone E - Residential South': [28.5500, 77.2100],
-            'Zone F - University Campus': [28.5840, 77.1630],
-            'Zone G - Hospital Road': [28.6180, 77.2150],
-            'Zone H - Bus Stand': [28.6250, 77.2300],
-            'Zone I - Old Town': [28.6560, 77.2350],
-            'Zone J - New Colony': [28.6300, 77.1800],
-            'Zone K - IT Park': [28.5300, 77.2600],
-            'Zone L - Lake Area': [28.6100, 77.1950]
+            'Zone A - Central Market': [26.8467, 80.9462], // Lucknow
+            'Zone B - Railway Station': [26.4499, 80.3319], // Kanpur
+            'Zone C - Industrial Area': [27.1767, 78.0081], // Agra
+            'Zone D - Residential North': [28.6692, 77.4538], // Ghaziabad
+            'Zone E - Residential South': [25.4358, 81.8463], // Prayagraj
+            'Zone F - University Campus': [25.3176, 82.9739], // Varanasi
+            'Zone G - Hospital Road': [26.7606, 83.3731], // Gorakhpur
+            'Zone H - Bus Stand': [28.9845, 77.7064], // Meerut
+            'Zone I - Old Town': [27.8974, 78.0880], // Aligarh
+            'Zone J - New Colony': [25.7913, 80.1983], // Hamirpur
+            'Zone K - IT Park': [28.5355, 77.3910], // Noida
+            'Zone L - Lake Area': [26.2236, 81.2418]  // Rae Bareli
         };
 
         let map = null;
@@ -143,10 +143,10 @@
         });
 
         function initMap() {
-            // Initialize Leaflet Map centered on Central New Delhi
+            // Initialize Leaflet Map centered on Uttar Pradesh
             map = L.map('map', {
                 zoomControl: false // Disable default zoom to custom position it later
-            }).setView([28.6139, 77.2090], 12);
+            }).setView([26.8467, 80.9462], 7);
 
             // Add standard OpenStreetMap tiles
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -166,13 +166,25 @@
                 // Fetch all complaints from the Admin endpoint
                 complaintsList = await apiRequest('/admin/complaints');
                 
-                // Set default coordinates with randomized slight offset to complaints
+                // Use database coordinates if available, otherwise fallback to ZONE_COORDINATES
                 complaintsList.forEach(c => {
-                    const zoneCoords = ZONE_COORDINATES[c.area_name] || [28.6139, 77.2090];
-                    // Random offset ensures markers don't overlap exactly
-                    const latOffset = (Math.random() - 0.5) * 0.007;
-                    const lngOffset = (Math.random() - 0.5) * 0.007;
-                    c.coordinates = [zoneCoords[0] + latOffset, zoneCoords[1] + lngOffset];
+                    let lat = parseFloat(c.latitude);
+                    let lng = parseFloat(c.longitude);
+                    
+                    if (isNaN(lat) || isNaN(lng)) {
+                        const zoneCoords = ZONE_COORDINATES[c.area_name] || [26.8467, 80.9462];
+                        const latOffset = (Math.random() - 0.5) * 0.01;
+                        const lngOffset = (Math.random() - 0.5) * 0.01;
+                        lat = zoneCoords[0] + latOffset;
+                        lng = zoneCoords[1] + lngOffset;
+                    } else {
+                        // Small jitter for overlapping precise coordinates
+                        const latOffset = (Math.random() - 0.5) * 0.0005;
+                        const lngOffset = (Math.random() - 0.5) * 0.0005;
+                        lat += latOffset;
+                        lng += lngOffset;
+                    }
+                    c.coordinates = [lat, lng];
                 });
 
                 applyMapFilters();

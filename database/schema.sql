@@ -23,7 +23,12 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- ============================================
 CREATE TABLE IF NOT EXISTS area (
     area_id INT AUTO_INCREMENT PRIMARY KEY,
-    area_name VARCHAR(100) NOT NULL UNIQUE
+    area_name VARCHAR(100) NOT NULL UNIQUE,
+    latitude DECIMAL(10, 8) DEFAULT NULL,
+    longitude DECIMAL(11, 8) DEFAULT NULL,
+    district VARCHAR(100) DEFAULT NULL,
+    state VARCHAR(100) DEFAULT NULL,
+    ward VARCHAR(100) DEFAULT NULL
 ) ENGINE=InnoDB;
 
 CREATE INDEX idx_area_name ON area(area_name);

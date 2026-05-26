@@ -8,7 +8,7 @@ router.get('/complaints', authenticateToken, authorizeRole('admin'), async (req,
     try {
         const { area_id, category, status, date_from, date_to, search } = req.query;
         let query = `
-            SELECT c.*, a.area_name, d.dept_name, ci.name AS citizen_name
+            SELECT c.*, a.area_name, a.latitude, a.longitude, d.dept_name, ci.name AS citizen_name
             FROM complaint c
             JOIN area a ON c.area_id = a.area_id
             LEFT JOIN department d ON c.dept_id = d.dept_id
@@ -65,13 +65,47 @@ router.get('/stats', authenticateToken, authorizeRole('admin'), async (req, res)
         const [escalated] = await db.query("SELECT COUNT(*) AS count FROM complaint WHERE status = 'Escalated'");
         const [citizens] = await db.query('SELECT COUNT(*) AS count FROM citizen');
 
+        // Average resolution time in seconds for resolved complaints
+        const [avgResTimeResult] = await db.query(
+            "SELECT AVG(TIMESTAMPDIFF(SECOND, date, resolved_date)) AS avg_res_time FROM complaint WHERE resolved_date IS NOT NULL"
+        );
+        const avgResolutionTime = avgResTimeResult[0].avg_res_time;
+
+        // Categories frequency (v_category_frequency)
+        const [categories] = await db.query('SELECT * FROM v_category_frequency');
+
+        // Monthly trend (directly query to include avg_res_time)
+        const [monthlyTrend] = await db.query(`
+            SELECT 
+                DATE_FORMAT(date, '%Y-%m') AS month,
+                COUNT(*) AS total_complaints,
+                SUM(CASE WHEN status = 'Resolved' THEN 1 ELSE 0 END) AS resolved,
+                SUM(CASE WHEN status = 'Pending' THEN 1 ELSE 0 END) AS pending,
+                AVG(TIMESTAMPDIFF(SECOND, date, resolved_date)) AS avg_res_time
+            FROM complaint
+            GROUP BY DATE_FORMAT(date, '%Y-%m')
+            ORDER BY month DESC
+            LIMIT 6
+        `);
+
+        // Department performance (v_dept_performance)
+        const [deptPerformance] = await db.query('SELECT * FROM v_dept_performance');
+
+        // Hotspot areas (v_hotspot_areas)
+        const [hotspots] = await db.query('SELECT * FROM v_hotspot_areas WHERE complaint_count > 0');
+
         res.json({
             total: total[0].count,
             pending: pending[0].count,
             in_progress: inProgress[0].count,
             resolved: resolved[0].count,
             escalated: escalated[0].count,
-            citizens: citizens[0].count
+            citizens: citizens[0].count,
+            avg_resolution_time: avgResolutionTime,
+            category_frequency: categories,
+            monthly_trend: monthlyTrend,
+            dept_performance: deptPerformance,
+            hotspots: hotspots
         });
     } catch (err) {
         console.error(err);

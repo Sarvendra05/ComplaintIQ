@@ -3,9 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="File a civic complaint - Report issues like road damage, water supply, garbage dump, and broken light on an interactive map.">
     <title>File Complaint - ComplaintIQ</title>
+    
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="/css/styles.css">
+    
+    <!-- Leaflet.js Mapping Library (CSS & JS) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <style>
+        .map-search-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            position: relative;
+        }
+        .map-search-wrapper {
+            position: relative;
+            flex: 1;
+        }
+        .search-results-dropdown {
+            position: absolute;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            max-height: 220px;
+            overflow-y: auto;
+            width: 100%;
+            z-index: 1000;
+            margin-top: 4px;
+        }
+        .search-result-item {
+            padding: 10px 14px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border);
+            transition: var(--transition-fast);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+        .search-result-item:hover {
+            background: var(--bg-card-hover);
+            padding-left: 18px;
+        }
+        .search-result-item i {
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+        .map-container-wrapper {
+            position: relative;
+            margin-bottom: 16px;
+        }
+        #map {
+            height: 350px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+            z-index: 1;
+        }
+        .location-info-panel {
+            background: var(--bg-main);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 14px;
+            margin-top: 12px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        .location-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 16px;
+        }
+        .location-info-item strong {
+            color: var(--text-primary);
+        }
+        .map-instructions {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+    </style>
 </head>
 <body>
     <div class="app-layout">
@@ -16,70 +105,102 @@
             
             <div class="page-container">
                 <div class="container">
-            <div class="page-header">
-                <h1 class="page-title"><i class="ph ph-pencil-simple-line"></i> File a New Complaint</h1>
-                <p class="page-subtitle">Report a public issue in your area</p>
-            </div>
-
-            <div class="card" style="max-width:700px;">
-                <form id="complaintForm" onsubmit="submitComplaint(event)">
-                    <div class="form-group">
-                        <label class="form-label">Complaint Title *</label>
-                        <input type="text" class="form-control" id="title" placeholder="Brief title of the issue" required>
+                    <div class="page-header">
+                        <h1 class="page-title"><i class="ph ph-pencil-simple-line"></i> File a New Complaint</h1>
+                        <p class="page-subtitle">Report a public issue in your area</p>
                     </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Category *</label>
-                            <select class="form-control" id="category" required>
-                                <option value="">Select Category</option>
-                                <option value="Road">Road</option>
-                                <option value="Water">Water</option>
-                                <option value="Garbage">Garbage</option>
-                                <option value="Light">Streetlight</option>
-                                <option value="Drainage">Drainage</option>
-                                <option value="Other">Other</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Priority *</label>
-                            <select class="form-control" id="priority" required>
-                                <option value="Low">Low</option>
-                                <option value="Medium" selected>Medium</option>
-                                <option value="High">High</option>
-                                <option value="Critical">Critical</option>
-                            </select>
-                        </div>
-                    </div>
+                    <div class="card" style="max-width:700px;">
+                        <form id="complaintForm" onsubmit="submitComplaint(event)">
+                            <div class="form-group">
+                                <label class="form-label">Complaint Title *</label>
+                                <input type="text" class="form-control" id="title" placeholder="Brief title of the issue" required>
+                            </div>
 
-                    <div class="form-group">
-                        <label class="form-label">Area *</label>
-                        <select class="form-control" id="area_id" required>
-                            <option value="">Loading areas...</option>
-                        </select>
-                    </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Category *</label>
+                                    <select class="form-control" id="category" required>
+                                        <option value="">Select Category</option>
+                                        <option value="Road">Road</option>
+                                        <option value="Water">Water</option>
+                                        <option value="Garbage">Garbage</option>
+                                        <option value="Light">Streetlight</option>
+                                        <option value="Drainage">Drainage</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Priority *</label>
+                                    <select class="form-control" id="priority" required>
+                                        <option value="Low">Low</option>
+                                        <option value="Medium" selected>Medium</option>
+                                        <option value="High">High</option>
+                                        <option value="Critical">Critical</option>
+                                    </select>
+                                </div>
+                            </div>
 
-                    <div class="form-group">
-                        <label class="form-label">Description *</label>
-                        <textarea class="form-control" id="description" placeholder="Describe the issue in detail..." required></textarea>
-                    </div>
+                            <!-- Real Interactive Leaflet Map Group -->
+                            <div class="form-group">
+                                <label class="form-label">Issue Location (Uttar Pradesh Only) *</label>
+                                
+                                <div class="map-search-bar">
+                                    <div class="map-search-wrapper">
+                                        <input type="text" id="mapSearch" class="form-control" placeholder="Search area, place, street or town in UP..." style="padding-left: 36px;" onkeydown="if(event.key==='Enter'){event.preventDefault(); searchMapLocation();}">
+                                        <i class="ph ph-magnifying-glass" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 1.1rem;"></i>
+                                    </div>
+                                    <button type="button" class="btn btn-secondary" onclick="searchMapLocation()" id="searchBtn">
+                                        <i class="ph ph-magnifying-glass"></i> Search
+                                    </button>
+                                    <div id="search-results" class="search-results-dropdown" style="display: none;"></div>
+                                </div>
 
-                    <div class="form-group">
-                        <label class="form-label">Proof Image (Optional, max 2MB)</label>
-                        <input type="file" class="form-control" id="image" accept=".jpg,.jpeg,.png" style="padding: 10px;">
-                    </div>
+                                <div class="map-container-wrapper">
+                                    <div id="map"></div>
+                                    <p class="map-instructions"><i class="ph ph-info"></i> Click directly on the map to pin the exact location of the issue.</p>
+                                </div>
 
-                    <div class="form-group">
-                        <label class="form-label">Date</label>
-                        <input type="text" class="form-control" id="dateField" disabled>
-                    </div>
+                                <div id="location-details-panel" class="location-info-panel" style="display: none;">
+                                    <h4 style="margin: 0 0 10px 0; color: var(--text-primary); font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
+                                        <i class="ph ph-check-circle" style="color: var(--success); font-size: 1.1rem;"></i> Location Verified
+                                    </h4>
+                                    <div class="location-info-grid">
+                                        <div class="location-info-item"><strong>Resolved Area:</strong> <span id="loc-area-name">—</span></div>
+                                        <div class="location-info-item"><strong>Ward/Neighborhood:</strong> <span id="loc-ward">—</span></div>
+                                        <div class="location-info-item"><strong>District:</strong> <span id="loc-district">—</span></div>
+                                        <div class="location-info-item"><strong>State:</strong> <span id="loc-state">—</span></div>
+                                        <div class="location-info-item"><strong>Latitude:</strong> <span id="loc-lat">—</span></div>
+                                        <div class="location-info-item"><strong>Longitude:</strong> <span id="loc-lng">—</span></div>
+                                    </div>
+                                </div>
 
-                    <div style="display:flex; gap:12px; justify-content:flex-end; margin-top:8px;">
-                        <a href="/my-complaints.html" class="btn btn-secondary">Cancel</a>
-                        <button type="submit" class="btn btn-primary" id="submitBtn">Submit Complaint</button>
+                                <!-- Hidden Resolved Area ID -->
+                                <input type="hidden" id="resolved_area_id" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Description *</label>
+                                <textarea class="form-control" id="description" placeholder="Describe the issue in detail..." required></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Proof Image (Optional, max 2MB)</label>
+                                <input type="file" class="form-control" id="image" accept=".jpg,.jpeg,.png" style="padding: 10px;">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Date</label>
+                                <input type="text" class="form-control" id="dateField" disabled>
+                            </div>
+
+                            <div style="display:flex; gap:12px; justify-content:flex-end; margin-top:8px;">
+                                <a href="/my-complaints.html" class="btn btn-secondary">Cancel</a>
+                                <button type="submit" class="btn btn-primary" id="submitBtn">Submit Complaint</button>
+                            </div>
+                        </form>
                     </div>
-                </form>
-            </div>
+                </div>
             </div>
         </div>
     </div>
@@ -90,13 +211,225 @@
 
     <script src="/js/app.js"></script>
     <script>
+        let map = null;
+        let marker = null;
+
         document.addEventListener('DOMContentLoaded', () => {
             if (!requireAuth(['citizen'])) return;
-            loadAreas('area_id');
+            initComplaintFormMap();
             document.getElementById('dateField').value = new Date().toLocaleDateString('en-IN', {
                 day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
             });
         });
+
+        function initComplaintFormMap() {
+            // Center of Uttar Pradesh (Lucknow coords: [26.8467, 80.9462])
+            const upCenter = [26.8467, 80.9462];
+            map = L.map('map', {
+                zoomControl: false
+            }).setView(upCenter, 7);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            L.control.zoom({ position: 'bottomleft' }).addTo(map);
+
+            // Listen to clicks on the map
+            map.on('click', async (e) => {
+                const { lat, lng } = e.latlng;
+                await selectMapLocation(lat, lng);
+            });
+        }
+
+        // Search location via Nominatim API restricted to Uttar Pradesh
+        async function searchMapLocation() {
+            const query = document.getElementById('mapSearch').value.trim();
+            if (!query) return;
+
+            const btn = document.getElementById('searchBtn');
+            const dropdown = document.getElementById('search-results');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="ph ph-circle-notch animate-spin"></i> searching...';
+
+            try {
+                // Bounds Uttar Pradesh: [23.8, 77.0, 31.4, 84.6]
+                // viewbox=77.0,31.4,84.6,23.8 & bounded=1 restricts to Uttar Pradesh
+                const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&viewbox=77.0,31.4,84.6,23.8&bounded=1&addressdetails=1&countrycodes=in&limit=5`;
+                
+                const response = await fetch(url, {
+                    headers: { 'Accept-Language': 'en' }
+                });
+                const results = await response.json();
+
+                dropdown.innerHTML = '';
+
+                if (results.length === 0) {
+                    dropdown.innerHTML = '<div class="search-result-item" style="cursor:default; color:var(--text-muted);"><i class="ph ph-info"></i> No locations found in Uttar Pradesh</div>';
+                    dropdown.style.display = 'block';
+                    return;
+                }
+
+                results.forEach(item => {
+                    const address = item.address || {};
+                    const state = address.state || '';
+                    if (state.toLowerCase() !== 'uttar pradesh') {
+                        return; // Filter out non-UP locations
+                    }
+
+                    const el = document.createElement('div');
+                    el.className = 'search-result-item';
+                    el.innerHTML = `<i class="ph ph-map-pin"></i> <span>${item.display_name}</span>`;
+                    el.onclick = () => {
+                        dropdown.style.display = 'none';
+                        document.getElementById('mapSearch').value = item.display_name;
+                        
+                        const lat = parseFloat(item.lat);
+                        const lng = parseFloat(item.lon);
+                        
+                        map.setView([lat, lng], 14);
+                        setMarker(lat, lng, item.display_name);
+                        parseAndSaveLocation(item);
+                    };
+                    dropdown.appendChild(el);
+                });
+
+                if (dropdown.children.length === 0) {
+                    dropdown.innerHTML = '<div class="search-result-item" style="cursor:default; color:var(--text-muted);"><i class="ph ph-info"></i> No locations found in Uttar Pradesh</div>';
+                }
+                dropdown.style.display = 'block';
+            } catch (err) {
+                console.error(err);
+                showToast('Error searching location', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="ph ph-magnifying-glass"></i> Search';
+            }
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            const dropdown = document.getElementById('search-results');
+            if (dropdown && !dropdown.contains(e.target) && e.target.id !== 'mapSearch') {
+                dropdown.style.display = 'none';
+            }
+        });
+
+        // Click marker selection & geocoding
+        async function selectMapLocation(lat, lng) {
+            setMarker(lat, lng, 'Loading address details...');
+            
+            try {
+                const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
+                const response = await fetch(url, {
+                    headers: { 'Accept-Language': 'en' }
+                });
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                const state = (data.address && data.address.state) || '';
+                if (state.toLowerCase() !== 'uttar pradesh') {
+                    if (marker) {
+                        map.removeLayer(marker);
+                        marker = null;
+                    }
+                    document.getElementById('location-details-panel').style.display = 'none';
+                    document.getElementById('resolved_area_id').value = '';
+                    showToast('Only locations within Uttar Pradesh are allowed. Please select a spot in UP.', 'error');
+                    return;
+                }
+
+                marker.getPopup().setContent(`<div style="font-family:'Inter',sans-serif;font-weight:600;">${data.display_name.split(',')[0]}</div>`);
+                parseAndSaveLocation(data);
+            } catch (err) {
+                console.error(err);
+                if (marker) {
+                    map.removeLayer(marker);
+                    marker = null;
+                }
+                showToast('Failed to retrieve location details. Try another point.', 'error');
+            }
+        }
+
+        function setMarker(lat, lng, popupText) {
+            if (marker) {
+                marker.setLatLng([lat, lng]);
+                marker.getPopup().setContent(popupText);
+            } else {
+                marker = L.marker([lat, lng]).addTo(map)
+                    .bindPopup(`<div style="font-family:'Inter',sans-serif;font-weight:600;">${popupText}</div>`).openPopup();
+            }
+        }
+
+        async function parseAndSaveLocation(data) {
+            try {
+                const address = data.address || {};
+                const state = address.state || 'Uttar Pradesh';
+                const district = address.district || address.county || address.city || address.town || 'Unknown District';
+                const ward = address.suburb || address.neighbourhood || address.village || address.municipality || address.road || 'General Area';
+                
+                let area_name = '';
+                const parts = [];
+                if (address.suburb) parts.push(address.suburb);
+                else if (address.neighbourhood) parts.push(address.neighbourhood);
+                else if (address.village) parts.push(address.village);
+                else if (address.road) parts.push(address.road);
+                
+                if (address.city) parts.push(address.city);
+                else if (address.town) parts.push(address.town);
+                else if (address.district) parts.push(address.district);
+                
+                if (parts.length > 0) {
+                    area_name = parts.join(', ');
+                } else {
+                    area_name = data.display_name ? data.display_name.split(',')[0] : 'UP Area';
+                }
+                
+                // Truncate to match DB limit
+                if (area_name.length > 90) {
+                    area_name = area_name.substring(0, 90) + '...';
+                }
+
+                const latitude = parseFloat(data.lat);
+                const longitude = parseFloat(data.lon);
+
+                // Show details panel
+                document.getElementById('loc-area-name').textContent = area_name;
+                document.getElementById('loc-ward').textContent = ward;
+                document.getElementById('loc-district').textContent = district;
+                document.getElementById('loc-state').textContent = state;
+                document.getElementById('loc-lat').textContent = latitude.toFixed(6);
+                document.getElementById('loc-lng').textContent = longitude.toFixed(6);
+                document.getElementById('location-details-panel').style.display = 'block';
+
+                // Call resolve endpoint to find or create area and get area_id
+                const resolved = await apiRequest('/areas/resolve', {
+                    method: 'POST',
+                    body: {
+                        area_name,
+                        district,
+                        state,
+                        ward,
+                        latitude,
+                        longitude
+                    }
+                });
+
+                if (resolved && resolved.area_id) {
+                    document.getElementById('resolved_area_id').value = resolved.area_id;
+                    showToast(resolved.created ? 'New area registered!' : 'Location resolved successfully.', 'success');
+                } else {
+                    throw new Error('Failed to resolve area ID');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast(err.message || 'Error resolving location', 'error');
+            }
+        }
 
         async function submitComplaint(e) {
             e.preventDefault();
@@ -105,11 +438,19 @@
             btn.textContent = 'Submitting...';
 
             try {
+                const areaId = document.getElementById('resolved_area_id').value;
+                if (!areaId) {
+                    showToast('Please select a valid location in Uttar Pradesh on the map.', 'error');
+                    btn.disabled = false;
+                    btn.textContent = 'Submit Complaint';
+                    return;
+                }
+
                 const formData = new FormData();
                 formData.append('title', document.getElementById('title').value);
                 formData.append('description', document.getElementById('description').value);
                 formData.append('category', document.getElementById('category').value);
-                formData.append('area_id', document.getElementById('area_id').value);
+                formData.append('area_id', areaId);
                 formData.append('priority', document.getElementById('priority').value);
                 
                 const imageFile = document.getElementById('image').files[0];
