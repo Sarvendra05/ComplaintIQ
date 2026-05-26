@@ -90,7 +90,7 @@ async function init() {
         console.log('\nDefault credentials:');
         console.log('  Admin    → username: admin      | password: admin@123');
         console.log('  Officers → username: *_officer   | password: officer@123');
-        console.log('  Citizens → email: aarav/diya/... | password: citizen123\n');
+        console.log('  Citizens → email: sarvendra/sakshi/ishan@example.com | password: citizen123\n');
 
     } catch (err) {
         console.error('\n✖ Database initialization failed:', err.message);
