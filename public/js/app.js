@@ -215,7 +215,12 @@ function renderTopbar(title = 'Dashboard') {
             <button class="mobile-menu-btn" onclick="toggleMobileNav()">
                 <i class="ph ph-list"></i>
             </button>
-            <h1 class="page-title">${title === 'Dashboard' ? `Welcome back, ${user ? user.name.split(' ')[0] : 'Admin'} 👋` : title}</h1>
+            <a href="/" class="page-title" style="display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:inherit;">
+                <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#4F46E5,#818cf8);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(79,70,229,0.25);">
+                    <i class="ph-fill ph-shield-check" style="color:#fff;font-size:18px;"></i>
+                </div>
+                <span style="font-size:1.18rem;font-weight:700;letter-spacing:-0.02em;">Complaint<span style="color:#818cf8;">IQ</span></span>
+            </a>
         </div>
         ${title === 'Dashboard' ? `
         <div class="topbar-center" style="flex:1; display:flex; justify-content:center;">

@@ -7,6 +7,66 @@
     <title>Register - ComplaintIQ</title>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        /* Register-page scoped overrides: fit the full form in one viewport */
+        .public-content { padding-top: var(--topbar-height); }
+        .auth-container {
+            padding: 16px 20px;
+            min-height: calc(100vh - var(--topbar-height));
+            box-sizing: border-box;
+        }
+        .auth-card {
+            padding: 28px 32px 24px;
+            max-width: 520px;
+        }
+        .auth-card h2 {
+            font-size: 1.35rem;
+            margin-bottom: 4px;
+        }
+        .auth-subtitle {
+            margin-bottom: 18px;
+            font-size: 0.85rem;
+        }
+        .auth-card .form-group {
+            margin-bottom: 12px;
+        }
+        .auth-card .form-label {
+            margin-bottom: 4px;
+            font-size: 0.8rem;
+        }
+        .auth-card .form-control {
+            padding: 8px 12px;
+            font-size: 0.9rem;
+        }
+        .auth-card .btn {
+            margin-top: 4px;
+            padding: 9px 16px;
+        }
+        .auth-footer {
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        .auth-footer a {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* Two-column layout for name+email and password+confirm on wider screens */
+        .form-row-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        @media (max-width: 540px) {
+            .form-row-2 { grid-template-columns: 1fr; }
+            .auth-card { padding: 20px 18px 18px; }
+        }
+    </style>
 </head>
 <body>
     <nav class="public-navbar" id="topbar"></nav>
@@ -18,31 +78,37 @@
                 <p class="auth-subtitle">Register as a citizen to file complaints</p>
 
                 <form id="registerForm" onsubmit="handleRegister(event)">
-                    <div class="form-group">
-                        <label class="form-label">Full Name *</label>
-                        <input type="text" class="form-control" id="name" placeholder="Enter your full name" required>
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label class="form-label">Full Name *</label>
+                            <input type="text" class="form-control" id="name" placeholder="Your full name" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Email *</label>
+                            <input type="email" class="form-control" id="email" placeholder="you@example.com" required>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Email *</label>
-                        <input type="email" class="form-control" id="email" placeholder="Enter your email" required>
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label class="form-label">Phone Number *</label>
+                            <input type ="tel" class="form-control" id="phone" placeholder="10-digit number" required pattern="\d{1,10}" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '')" title="Phone number must be numeric and up to 10 digits">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Area</label>
+                            <input type="text" class="form-control" id="area" placeholder="City / location">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Phone Number *</label>
-                        <input type ="tel" class="form-control" id="phone" placeholder="Enter phone number (max 10 digits)" required pattern="\d{1,10}" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '')" title="Phone number must be numeric and up to 10 digits">
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label class="form-label">Password *</label>
+                            <input type="password" class="form-control" id="password" placeholder="Min 6 characters" required minlength="6">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Confirm Password *</label>
+                            <input type="password" class="form-control" id="confirmPassword" placeholder="Re-enter password" required>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Area</label>
-                        <input type="text" class="form-control" id="area" placeholder="Your city/location">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Password *</label>
-                        <input type="password" class="form-control" id="password" placeholder="Create a password (min 6 chars)" required minlength="6">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Confirm Password *</label>
-                        <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm your password" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="width:100%; margin-top:8px;" id="registerBtn">
+                    <button type="submit" class="btn btn-primary" style="width:100%;" id="registerBtn">
                         Create Account
                     </button>
                 </form>
