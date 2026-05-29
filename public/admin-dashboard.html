@@ -122,6 +122,41 @@
         </div>
     </div>
 
+    <!-- Complaint Details & Timeline Modal -->
+    <div class="modal-overlay" id="detailsModal">
+        <div class="modal" style="max-width: 800px;">
+            <div class="modal-header">
+                <span class="modal-title">Complaint Details</span>
+                <button class="modal-close" onclick="closeDetailsModal()">&times;</button>
+            </div>
+            
+            <div class="grid-2-3">
+                <!-- Left: Details -->
+                <div>
+                    <h3 id="detTitle" style="margin-bottom:8px; font-size:1.1rem;"></h3>
+                    <p id="detDesc" style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:16px;"></p>
+                    
+                    <div style="display:flex; gap:8px; margin-bottom:24px;" id="detBadges"></div>
+                    
+                    <div id="detImageContainer" style="display:none; margin-bottom:24px;">
+                        <span class="form-label">Proof Image</span>
+                        <img id="detImage" src="" style="width:100%; border-radius:var(--radius-md); border:1px solid var(--border); cursor:pointer;" onclick="openImageModal(this.src)">
+                    </div>
+                </div>
+
+                <!-- Right: Timeline -->
+                <div>
+                    <h4 style="margin-bottom:16px; font-size:1rem;">Tracking Timeline</h4>
+                    <div class="card" style="padding:16px;">
+                        <div class="timeline" id="detTimeline">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Assign Department Modal -->
     <div class="modal-overlay" id="assignModal">
         <div class="modal">
@@ -564,13 +599,14 @@
                                         </td>
                                         <td>${getPriorityBadge(c.priority)}</td>
                                         <td style="color:var(--text-primary); font-weight:500;">${c.dept_name || '—'}</td>
-                                        <td style="padding-right:24px; text-align:right;">
+                                        <td style="padding-right:24px; text-align:right; white-space: nowrap;">
                                             ${!c.dept_id
                                                 ? `<button class="btn ${c.status === 'Escalated' ? 'btn-danger' : 'btn-primary'} btn-sm" onclick="openAssignModal(${c.complaint_id}, '${c.title.replace(/'/g, "\\'")}', ${c.status === 'Escalated'})">${c.status === 'Escalated' ? 'Reassign' : 'Assign'}</button>`
                                                 : (c.reopen_count > 0 && c.status === 'In Progress')
                                                     ? `<button class="btn btn-danger btn-sm" onclick="openAssignModal(${c.complaint_id}, '${c.title.replace(/'/g, "\\'")}', true)">Reassign</button>`
                                                     : ''
                                             }
+                                            <button class="btn btn-outline btn-sm" style="margin-left:4px;" onclick='openDetailsModal(${JSON.stringify(c).replace(/'/g, "&#39;")})'>Details</button>
                                         </td>
                                     </tr>
                                 `).join('')}
@@ -639,6 +675,75 @@
             } catch (err) {
                 showToast(err.message || 'Failed to assign department', 'error');
             }
+        }
+
+        function openDetailsModal(c) {
+            document.getElementById('detTitle').textContent = c.title;
+            document.getElementById('detDesc').textContent = c.description || 'No description provided.';
+            document.getElementById('detBadges').innerHTML = `
+                <span class="badge badge-category">${c.category}</span>
+                ${getPriorityBadge(c.priority)}
+                ${getStatusBadge(c.status)}
+            `;
+            
+            if (c.image_path) {
+                document.getElementById('detImage').src = c.image_path;
+                document.getElementById('detImageContainer').style.display = 'block';
+            } else {
+                document.getElementById('detImageContainer').style.display = 'none';
+            }
+
+            // Generate Timeline
+            const statuses = ['Pending', 'In Progress', 'Resolved'];
+            let currentIdx = statuses.indexOf(c.status);
+            if (c.status === 'Escalated') currentIdx = 0; // Special case
+
+            let timelineHtml = `
+                <div class="timeline-item completed">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-title">Reported</div>
+                        <div class="timeline-time">${formatDate(c.date)}</div>
+                    </div>
+                </div>
+            `;
+
+            statuses.forEach((st, i) => {
+                let stateClass = '';
+                if (i < currentIdx) stateClass = 'completed';
+                else if (i === currentIdx) stateClass = 'active';
+
+                let timeStr = stateClass === 'completed' || stateClass === 'active' ? formatDate(c.date) : 'Pending...';
+                
+                timelineHtml += `
+                    <div class="timeline-item ${stateClass}">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-content">
+                            <div class="timeline-title">${st}</div>
+                            <div class="timeline-time">${timeStr}</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            if (c.status === 'Escalated') {
+                timelineHtml += `
+                    <div class="timeline-item active">
+                        <div class="timeline-marker" style="border-color:var(--danger); background:var(--danger);"></div>
+                        <div class="timeline-content">
+                            <div class="timeline-title" style="color:var(--danger);">Escalated</div>
+                            <div class="timeline-time">Critical Delay</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            document.getElementById('detTimeline').innerHTML = timelineHtml;
+            document.getElementById('detailsModal').classList.add('active');
+        }
+
+        function closeDetailsModal() {
+            document.getElementById('detailsModal').classList.remove('active');
         }
 
         function openImageModal(imagePath) {
