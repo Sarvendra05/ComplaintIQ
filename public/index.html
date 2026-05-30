@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -52,31 +52,23 @@
     </script>
     
     <style>
-
-        body { margin: 0; transition: background-color 0.3s, color 0.3s; }
+        /* Base overrides to fit existing app structure if needed */
+        body { background-color: #020617; color: #F8FAFC; margin: 0; }
         .glass-card {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(0, 0, 0, 0.05);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-        .dark .glass-card {
             background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
         .glass-card:hover {
-            background: rgba(255, 255, 255, 0.9);
-            border: 1px solid rgba(0, 0, 0, 0.1);
-        }
-        .dark .glass-card:hover {
             background: rgba(30, 41, 59, 0.7);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
+        /* Disable the vanilla topbar injected by app.js on the public pages since we built a React one */
         #topbar { display: none !important; }
-
     </style>
 </head>
-<body class="bg-slate-50 dark:bg-dark-900 text-slate-900 dark:text-slate-50 antialiased font-sans">
+<body class="bg-dark-900 text-slate-50 antialiased font-sans">
     
     <!-- React Root -->
     <div id="root"></div>
@@ -101,9 +93,7 @@
         const Activity = (p) => <IconWrapper {...p}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></IconWrapper>;
         const Clock = (p) => <IconWrapper {...p}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></IconWrapper>;
         const Users = (p) => <IconWrapper {...p}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></IconWrapper>;
-                const FileText = (p) => <IconWrapper {...p}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></IconWrapper>;
-        const Sun = (p) => <IconWrapper {...p}><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></IconWrapper>;
-        const Moon = (p) => <IconWrapper {...p}><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></IconWrapper>;
+        const FileText = (p) => <IconWrapper {...p}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></IconWrapper>;
         const CheckCircle = (p) => <IconWrapper {...p}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></IconWrapper>;
         const ArrowRight = (p) => <IconWrapper {...p}><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></IconWrapper>;
         const BarChart3 = (p) => <IconWrapper {...p}><path d="M3 3v18h18"/><rect width="4" height="7" x="7" y="10" rx="1"/><rect width="4" height="12" x="15" y="5" rx="1"/></IconWrapper>;
@@ -111,22 +101,14 @@
 
         const { useState, useEffect } = React;
 
-                const App = () => {
+        const App = () => {
             const [user, setUser] = useState(null);
-            const [isDark, setIsDark] = useState(true);
 
             useEffect(() => {
+                // Ensure getUser is available from app.js
                 if (typeof window.getUser === 'function') {
                     setUser(window.getUser());
                 }
-                
-                const checkTheme = () => {
-                    setIsDark(document.documentElement.classList.contains('dark'));
-                };
-                
-                checkTheme(); // Initial check
-                window.addEventListener('themeChanged', checkTheme);
-                return () => window.removeEventListener('themeChanged', checkTheme);
             }, []);
 
             const getPrimaryLink = () => {
@@ -148,7 +130,7 @@
             const secondaryLink = getSecondaryLink();
 
             return (
-                <div className="min-h-screen bg-slate-50 dark:bg-dark-900 overflow-hidden selection:bg-primary selection:text-slate-900 dark:text-white relative">
+                <div className="min-h-screen bg-dark-900 overflow-hidden selection:bg-primary selection:text-white relative">
                     {/* Background Gradients */}
                     <div className="fixed inset-0 z-0 pointer-events-none">
                         <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-primary/20 rounded-full mix-blend-screen filter blur-[100px] animate-blob"></div>
@@ -157,23 +139,20 @@
                     </div>
 
                     {/* Navbar */}
-                    <nav className="relative z-50 border-b border-black/5 dark:border-white/5 bg-slate-50 dark:bg-dark-900/50 backdrop-blur-md">
+                    <nav className="relative z-50 border-b border-white/5 bg-dark-900/50 backdrop-blur-md">
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                             <div className="flex items-center justify-between h-20">
                                 <a href="/" className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-indigo-400 flex items-center justify-center shadow-lg shadow-primary/20">
-                                        <Layers className="text-slate-900 dark:text-white" size={20} />
+                                        <Layers className="text-white" size={20} />
                                     </div>
-                                    <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Complaint<span className="text-primary-light">IQ</span></span>
+                                    <span className="text-xl font-bold tracking-tight text-white">Complaint<span className="text-primary-light">IQ</span></span>
                                 </a>
                                 <div className="flex items-center gap-4">
-                                    <button onClick={() => window.toggleTheme()} className="text-slate-500 hover:text-slate-900 dark:text-slate-500 dark:text-slate-400 dark:hover:text-slate-900 dark:text-white transition-colors p-2 rounded-full hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5" title="Toggle Theme">
-                                        {isDark ? <Sun size={20} /> : <Moon size={20} />}
-                                    </button>
-                                    <a href="/login.html" className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:text-white px-4 py-2.5 rounded-lg border border-black/10 dark:border-white/10 hover:border-white/20 hover:bg-black/5 dark:bg-white/5 transition-all duration-200">
+                                    <a href="/login.html" className="text-sm font-medium text-slate-300 hover:text-white px-4 py-2.5 rounded-lg border border-white/10 hover:border-white/20 hover:bg-white/5 transition-all duration-200">
                                         Sign In
                                     </a>
-                                    <a href="/register.html" className="text-sm font-medium bg-primary hover:bg-primary-dark text-slate-900 dark:text-white px-5 py-2.5 rounded-lg transition-all duration-200 shadow-[0_0_15px_rgba(79,70,229,0.3)] hover:shadow-[0_0_25px_rgba(79,70,229,0.5)]">
+                                    <a href="/register.html" className="text-sm font-medium bg-primary hover:bg-primary-dark text-white px-5 py-2.5 rounded-lg transition-all duration-200 shadow-[0_0_15px_rgba(79,70,229,0.3)] hover:shadow-[0_0_25px_rgba(79,70,229,0.5)]">
                                         Register
                                     </a>
                                 </div>
@@ -188,24 +167,24 @@
                                 <div className="lg:col-span-6 text-center lg:text-left">
                                     <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-card mb-8">
                                         <span className="flex h-2 w-2 rounded-full bg-accent animate-pulse"></span>
-                                        <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Predictive Intelligence Platform v2.0</span>
+                                        <span className="text-sm font-medium text-slate-300">Predictive Intelligence Platform v2.0</span>
                                     </div>
-                                    <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-6 leading-[1.1]">
+                                    <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white mb-6 leading-[1.1]">
                                         Smart Civic <br />
                                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-light via-indigo-400 to-cyan-400">
                                             Complaint Management
                                         </span>
                                     </h1>
-                                    <p className="text-lg sm:text-xl text-slate-500 dark:text-slate-400 mb-10 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+                                    <p className="text-lg sm:text-xl text-slate-400 mb-10 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
                                         Empowering citizens to report public issues while leveraging AI to detect recurring problem areas, track department performance, and predict future hotspots in real-time.
                                     </p>
                                     <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                                        <a href={primaryLink.href} className="inline-flex items-center justify-center gap-2 px-8 py-4 text-base font-semibold text-slate-900 dark:text-white bg-primary hover:bg-primary-dark rounded-xl transition-all duration-300 shadow-[0_0_20px_rgba(79,70,229,0.4)] hover:shadow-[0_0_30px_rgba(79,70,229,0.6)] hover:-translate-y-1">
+                                        <a href={primaryLink.href} className="inline-flex items-center justify-center gap-2 px-8 py-4 text-base font-semibold text-white bg-primary hover:bg-primary-dark rounded-xl transition-all duration-300 shadow-[0_0_20px_rgba(79,70,229,0.4)] hover:shadow-[0_0_30px_rgba(79,70,229,0.6)] hover:-translate-y-1">
                                             {primaryLink.text}
                                             <ArrowRight size={20} />
                                         </a>
                                         {secondaryLink.show && (
-                                            <a href={secondaryLink.href} className="inline-flex items-center justify-center gap-2 px-8 py-4 text-base font-semibold text-slate-700 dark:text-slate-200 glass-card rounded-xl transition-all duration-300 hover:text-slate-900 dark:text-white hover:-translate-y-1">
+                                            <a href={secondaryLink.href} className="inline-flex items-center justify-center gap-2 px-8 py-4 text-base font-semibold text-slate-200 glass-card rounded-xl transition-all duration-300 hover:text-white hover:-translate-y-1">
                                                 {secondaryLink.text}
                                             </a>
                                         )}
@@ -213,11 +192,11 @@
                                 </div>
                                 <div className="lg:col-span-6 mt-16 lg:mt-0 relative hidden md:block">
                                     {/* Dashboard Mockup Abstract */}
-                                    <div className="relative rounded-2xl glass-card border border-black/10 dark:border-white/10 p-2 overflow-hidden shadow-2xl">
+                                    <div className="relative rounded-2xl glass-card border border-white/10 p-2 overflow-hidden shadow-2xl">
                                         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
-                                        <div className="bg-slate-50 dark:bg-dark-900 rounded-xl overflow-hidden border border-black/5 dark:border-white/5">
+                                        <div className="bg-dark-900 rounded-xl overflow-hidden border border-white/5">
                                             {/* Mock Header */}
-                                            <div className="h-12 border-b border-black/5 dark:border-white/5 flex items-center px-4 gap-2">
+                                            <div className="h-12 border-b border-white/5 flex items-center px-4 gap-2">
                                                 <div className="w-3 h-3 rounded-full bg-red-500/80"></div>
                                                 <div className="w-3 h-3 rounded-full bg-yellow-500/80"></div>
                                                 <div className="w-3 h-3 rounded-full bg-green-500/80"></div>
@@ -225,16 +204,16 @@
                                             {/* Mock Content */}
                                             <div className="p-6">
                                                 <div className="flex gap-4 mb-6">
-                                                    <div className="flex-1 h-24 bg-black/5 dark:bg-white/5 rounded-lg border border-black/5 dark:border-white/5 p-4 flex flex-col justify-between">
+                                                    <div className="flex-1 h-24 bg-white/5 rounded-lg border border-white/5 p-4 flex flex-col justify-between">
                                                         <div className="w-8 h-8 rounded bg-primary/20 flex items-center justify-center"><Activity className="text-primary-light" size={16}/></div>
                                                         <div className="h-4 w-16 bg-white/10 rounded"></div>
                                                     </div>
-                                                    <div className="flex-1 h-24 bg-black/5 dark:bg-white/5 rounded-lg border border-black/5 dark:border-white/5 p-4 flex flex-col justify-between">
+                                                    <div className="flex-1 h-24 bg-white/5 rounded-lg border border-white/5 p-4 flex flex-col justify-between">
                                                         <div className="w-8 h-8 rounded bg-accent/20 flex items-center justify-center"><MapIcon className="text-accent" size={16}/></div>
                                                         <div className="h-4 w-12 bg-white/10 rounded"></div>
                                                     </div>
                                                 </div>
-                                                <div className="h-40 bg-black/5 dark:bg-white/5 rounded-lg border border-black/5 dark:border-white/5 relative overflow-hidden flex items-end px-4 gap-2 pb-4">
+                                                <div className="h-40 bg-white/5 rounded-lg border border-white/5 relative overflow-hidden flex items-end px-4 gap-2 pb-4">
                                                     {/* Mock Chart Bars */}
                                                     {[40, 70, 45, 90, 65, 80, 55].map((h, i) => (
                                                         <div key={i} className="flex-1 bg-gradient-to-t from-primary/80 to-primary-light/20 rounded-t-sm" style={{height: `${h}%`}}></div>
@@ -250,8 +229,8 @@
                                             <CheckCircle className="text-green-400" size={24} />
                                         </div>
                                         <div>
-                                            <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">Resolution Rate</div>
-                                            <div className="text-xl font-bold text-slate-900 dark:text-white">94.2%</div>
+                                            <div className="text-xs text-slate-400 font-medium">Resolution Rate</div>
+                                            <div className="text-xl font-bold text-white">94.2%</div>
                                         </div>
                                     </div>
                                     <div className="absolute -top-6 -right-6 glass-card p-4 rounded-xl flex items-center gap-4 shadow-xl animate-[bounce_7s_infinite_reverse]">
@@ -259,8 +238,8 @@
                                             <BrainCircuit className="text-accent" size={24} />
                                         </div>
                                         <div>
-                                            <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">AI Detection</div>
-                                            <div className="text-xl font-bold text-slate-900 dark:text-white">Active</div>
+                                            <div className="text-xs text-slate-400 font-medium">AI Detection</div>
+                                            <div className="text-xl font-bold text-white">Active</div>
                                         </div>
                                     </div>
                                 </div>
@@ -268,7 +247,7 @@
                         </section>
 
                         {/* SECTION 2 - STATS ROW */}
-                        <section className="py-12 border-y border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02]">
+                        <section className="py-12 border-y border-white/5 bg-white/[0.02]">
                             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12 text-center">
                                     {[
@@ -279,8 +258,8 @@
                                     ].map((stat, i) => (
                                         <div key={i} className="flex flex-col items-center">
                                             <stat.icon className={`mb-3 ${stat.color}`} size={32} strokeWidth={1.5} />
-                                            <div className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white mb-2">{stat.value}</div>
-                                            <div className="text-sm font-medium text-slate-500 dark:text-slate-400">{stat.label}</div>
+                                            <div className="text-3xl sm:text-4xl font-extrabold text-white mb-2">{stat.value}</div>
+                                            <div className="text-sm font-medium text-slate-400">{stat.label}</div>
                                         </div>
                                     ))}
                                 </div>
@@ -290,10 +269,10 @@
                         {/* SECTION 3 - FEATURES GRID (Replaces "How It Works") */}
                         <section className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
                             <div className="text-center mb-16 max-w-3xl mx-auto">
-                                <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-6">
+                                <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">
                                     Next-Generation <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-light to-accent">Civic Operations</span>
                                 </h2>
-                                <p className="text-slate-500 dark:text-slate-400 text-lg">
+                                <p className="text-slate-400 text-lg">
                                     A streamlined platform replacing fragmented systems with a unified, intelligent dashboard for citizens and administrators.
                                 </p>
                             </div>
@@ -306,40 +285,40 @@
                                     { title: 'Analytics & Hotspots', desc: 'Visual heatmaps and performance dashboards for municipal departments.', icon: BarChart3, color: 'from-accent/20 to-accent/0', text: 'text-accent' }
                                 ].map((feat, i) => (
                                     <div key={i} className="glass-card rounded-2xl p-8 group transition-all duration-300 hover:-translate-y-2 h-full flex flex-col">
-                                        <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${feat.color} flex items-center justify-center mb-6 border border-black/5 dark:border-white/5 group-hover:scale-110 transition-transform duration-300`}>
+                                        <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${feat.color} flex items-center justify-center mb-6 border border-white/5 group-hover:scale-110 transition-transform duration-300`}>
                                             <feat.icon className={feat.text} size={28} />
                                         </div>
-                                        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">{feat.title}</h3>
-                                        <p className="text-slate-500 dark:text-slate-400 leading-relaxed flex-1">{feat.desc}</p>
+                                        <h3 className="text-xl font-bold text-white mb-3">{feat.title}</h3>
+                                        <p className="text-slate-400 leading-relaxed flex-1">{feat.desc}</p>
                                     </div>
                                 ))}
                             </div>
                         </section>
 
                         {/* SECTION 4 - DASHBOARD PREVIEW */}
-                        <section className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-black/5 dark:border-white/5 relative">
+                        <section className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-white/5 relative">
                             {/* Subtle sophisticated background instead of neon glow */}
                             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-[600px] bg-[radial-gradient(ellipse_at_top,rgba(79,70,229,0.12),transparent_50%)] pointer-events-none"></div>
                             
                             <div className="text-center mb-16 relative z-10">
-                                <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-4 tracking-tight">
+                                <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4 tracking-tight">
                                     Designed for <span className="text-transparent bg-clip-text bg-gradient-to-r from-slate-200 to-slate-500">Scale</span>
                                 </h2>
-                                <p className="text-slate-500 dark:text-slate-400 text-lg max-w-2xl mx-auto font-light">
+                                <p className="text-slate-400 text-lg max-w-2xl mx-auto font-light">
                                     Production-ready analytics dashboards for municipal officers to monitor city health, track resolutions, and predict hotspots in real-time.
                                 </p>
                             </div>
 
                             {/* Realistic Dashboard Mockup */}
-                            <div className="relative rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#0A0A0A] overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.4)] mx-auto max-w-6xl z-10 ring-1 ring-white/5">
+                            <div className="relative rounded-xl border border-white/10 bg-[#0A0A0A] overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.4)] mx-auto max-w-6xl z-10 ring-1 ring-white/5">
                                 {/* Window Chrome */}
-                                <div className="h-12 bg-slate-50 dark:bg-[#0F0F0F] border-b border-black/5 dark:border-white/5 flex items-center px-4 gap-2">
+                                <div className="h-12 bg-[#0F0F0F] border-b border-white/5 flex items-center px-4 gap-2">
                                     <div className="flex gap-2">
-                                        <div className="w-3 h-3 rounded-full bg-[#FF5F56] border border-black/10 dark:border-white/10"></div>
-                                        <div className="w-3 h-3 rounded-full bg-[#FFBD2E] border border-black/10 dark:border-white/10"></div>
-                                        <div className="w-3 h-3 rounded-full bg-[#27C93F] border border-black/10 dark:border-white/10"></div>
+                                        <div className="w-3 h-3 rounded-full bg-[#FF5F56] border border-white/10"></div>
+                                        <div className="w-3 h-3 rounded-full bg-[#FFBD2E] border border-white/10"></div>
+                                        <div className="w-3 h-3 rounded-full bg-[#27C93F] border border-white/10"></div>
                                     </div>
-                                    <div className="mx-auto bg-slate-100 dark:bg-[#1A1A1A] text-slate-500 dark:text-slate-400 text-xs px-4 py-1.5 rounded-md border border-black/5 dark:border-white/5 flex items-center gap-2 shadow-inner">
+                                    <div className="mx-auto bg-[#1A1A1A] text-slate-400 text-xs px-4 py-1.5 rounded-md border border-white/5 flex items-center gap-2 shadow-inner">
                                         <Shield size={12} />
                                         complaintiq.gov/dashboard
                                     </div>
@@ -348,13 +327,13 @@
 
                                 <div className="flex h-[700px]">
                                     {/* Sidebar */}
-                                    <div className="w-64 bg-slate-50 dark:bg-[#0F0F0F] border-r border-black/5 dark:border-white/5 flex flex-col hidden md:flex">
-                                        <div className="p-4 flex items-center gap-3 border-b border-black/5 dark:border-white/5">
+                                    <div className="w-64 bg-[#0F0F0F] border-r border-white/5 flex flex-col hidden md:flex">
+                                        <div className="p-4 flex items-center gap-3 border-b border-white/5">
                                             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center shadow-inner">
-                                                <Layers className="text-slate-900 dark:text-white" size={16} />
+                                                <Layers className="text-white" size={16} />
                                             </div>
                                             <div>
-                                                <div className="text-sm font-semibold text-slate-900 dark:text-white">Central District</div>
+                                                <div className="text-sm font-semibold text-white">Central District</div>
                                                 <div className="text-xs text-slate-500">Admin Portal</div>
                                             </div>
                                         </div>
@@ -367,17 +346,17 @@
                                                 { icon: Users, label: 'Citizens', active: false },
                                                 { icon: BarChart3, label: 'Analytics', active: false },
                                             ].map((item, i) => (
-                                                <div key={i} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors cursor-default ${item.active ? 'bg-primary/10 text-primary-light font-medium' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-200 hover:bg-black/5 dark:bg-white/5'}`}>
+                                                <div key={i} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors cursor-default ${item.active ? 'bg-primary/10 text-primary-light font-medium' : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'}`}>
                                                     <item.icon size={16} />
                                                     {item.label}
                                                 </div>
                                             ))}
                                         </div>
-                                        <div className="p-4 border-t border-black/5 dark:border-white/5">
+                                        <div className="p-4 border-t border-white/5">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 border border-black/10 dark:border-white/10 shadow-inner"></div>
+                                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 border border-white/10 shadow-inner"></div>
                                                 <div>
-                                                    <div className="text-sm font-medium text-slate-900 dark:text-white">Alex Morgan</div>
+                                                    <div className="text-sm font-medium text-white">Alex Morgan</div>
                                                     <div className="text-xs text-slate-500">System Admin</div>
                                                 </div>
                                             </div>
@@ -385,11 +364,11 @@
                                     </div>
 
                                     {/* Main Content */}
-                                    <div className="flex-1 bg-white dark:bg-[#0A0A0A] overflow-hidden flex flex-col">
-                                        <div className="h-16 border-b border-black/5 dark:border-white/5 flex items-center justify-between px-8 bg-white dark:bg-[#0A0A0A]">
-                                            <h3 className="text-lg font-medium text-slate-900 dark:text-white tracking-tight">Overview</h3>
+                                    <div className="flex-1 bg-[#0A0A0A] overflow-hidden flex flex-col">
+                                        <div className="h-16 border-b border-white/5 flex items-center justify-between px-8 bg-[#0A0A0A]">
+                                            <h3 className="text-lg font-medium text-white tracking-tight">Overview</h3>
                                             <div className="flex items-center gap-4">
-                                                <div className="px-3 py-1.5 rounded-md border border-black/10 dark:border-white/10 text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2 bg-slate-50 dark:bg-[#0F0F0F]">
+                                                <div className="px-3 py-1.5 rounded-md border border-white/10 text-xs text-slate-400 flex items-center gap-2 bg-[#0F0F0F]">
                                                     Last 30 Days
                                                 </div>
                                                 <button className="px-3 py-1.5 bg-white text-black text-xs font-medium rounded-md hover:bg-slate-200 transition-colors shadow-sm">
@@ -406,10 +385,10 @@
                                                     { title: 'Avg. Resolution Time', value: '24h 12m', change: '-4.2%', isPositive: true },
                                                     { title: 'Active Hotspots', value: '14', change: '+2', isPositive: false }
                                                 ].map((stat, i) => (
-                                                    <div key={i} className="p-5 rounded-xl border border-black/5 dark:border-white/5 bg-gradient-to-b from-white/[0.03] to-transparent hover:border-black/10 dark:border-white/10 transition-colors group cursor-default">
-                                                        <div className="text-sm text-slate-500 dark:text-slate-400 mb-2 font-medium">{stat.title}</div>
+                                                    <div key={i} className="p-5 rounded-xl border border-white/5 bg-gradient-to-b from-white/[0.03] to-transparent hover:border-white/10 transition-colors group cursor-default">
+                                                        <div className="text-sm text-slate-400 mb-2 font-medium">{stat.title}</div>
                                                         <div className="flex items-end gap-3">
-                                                            <div className="text-3xl font-semibold text-slate-900 dark:text-white tracking-tight group-hover:text-primary-light transition-colors">{stat.value}</div>
+                                                            <div className="text-3xl font-semibold text-white tracking-tight group-hover:text-primary-light transition-colors">{stat.value}</div>
                                                             <div className={`text-xs font-medium mb-1 ${stat.isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
                                                                 {stat.change}
                                                             </div>
@@ -421,19 +400,19 @@
                                             {/* Charts Section */}
                                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
                                                 {/* Main Chart */}
-                                                <div className="lg:col-span-2 p-6 rounded-xl border border-black/5 dark:border-white/5 bg-slate-50 dark:bg-[#0F0F0F] flex flex-col hover:border-black/10 dark:border-white/10 transition-colors">
+                                                <div className="lg:col-span-2 p-6 rounded-xl border border-white/5 bg-[#0F0F0F] flex flex-col hover:border-white/10 transition-colors">
                                                     <div className="flex justify-between items-center mb-6">
-                                                        <div className="text-sm font-medium text-slate-900 dark:text-white">Issue Volume</div>
+                                                        <div className="text-sm font-medium text-white">Issue Volume</div>
                                                         <div className="flex gap-2">
-                                                            <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-primary"></div><span className="text-xs text-slate-500 dark:text-slate-400">Reported</span></div>
-                                                            <div className="flex items-center gap-1.5 ml-3"><div className="w-2 h-2 rounded-full bg-emerald-500"></div><span className="text-xs text-slate-500 dark:text-slate-400">Resolved</span></div>
+                                                            <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-primary"></div><span className="text-xs text-slate-400">Reported</span></div>
+                                                            <div className="flex items-center gap-1.5 ml-3"><div className="w-2 h-2 rounded-full bg-emerald-500"></div><span className="text-xs text-slate-400">Resolved</span></div>
                                                         </div>
                                                     </div>
                                                     <div className="flex-1 h-48 flex items-end justify-between gap-3 relative">
                                                         {/* Grid lines */}
-                                                        <div className="absolute inset-0 flex flex-col justify-between pointer-events-none border-y border-black/5 dark:border-white/5">
-                                                            <div className="border-b border-black/5 dark:border-white/5 w-full h-1/3"></div>
-                                                            <div className="border-b border-black/5 dark:border-white/5 w-full h-1/3"></div>
+                                                        <div className="absolute inset-0 flex flex-col justify-between pointer-events-none border-y border-white/5">
+                                                            <div className="border-b border-white/5 w-full h-1/3"></div>
+                                                            <div className="border-b border-white/5 w-full h-1/3"></div>
                                                         </div>
                                                         {/* Bars */}
                                                         {[40, 55, 45, 75, 60, 85, 95, 70, 50, 80, 65, 90].map((h, i) => (
@@ -449,14 +428,14 @@
                                                 </div>
 
                                                 {/* Secondary Card */}
-                                                <div className="p-6 rounded-xl border border-black/5 dark:border-white/5 bg-slate-50 dark:bg-[#0F0F0F] flex flex-col hover:border-black/10 dark:border-white/10 transition-colors">
-                                                    <div className="text-sm font-medium text-slate-900 dark:text-white mb-6">Category Distribution</div>
+                                                <div className="p-6 rounded-xl border border-white/5 bg-[#0F0F0F] flex flex-col hover:border-white/10 transition-colors">
+                                                    <div className="text-sm font-medium text-white mb-6">Category Distribution</div>
                                                     <div className="flex-1 flex items-center justify-center">
                                                         {/* Simulated Donut Chart using CSS */}
                                                         <div className="relative w-40 h-40 rounded-full border-[16px] border-[#1A1A1A] border-t-primary border-r-indigo-500 border-b-cyan-500 shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]">
                                                             <div className="absolute inset-0 flex items-center justify-center flex-col">
-                                                                <span className="text-2xl font-bold text-slate-900 dark:text-white">82%</span>
-                                                                <span className="text-[10px] text-slate-500 dark:text-slate-400">Resolution Rate</span>
+                                                                <span className="text-2xl font-bold text-white">82%</span>
+                                                                <span className="text-[10px] text-slate-400">Resolution Rate</span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -469,9 +448,9 @@
                                                             <div key={i} className="flex items-center justify-between text-xs">
                                                                 <div className="flex items-center gap-2">
                                                                     <div className={`w-2 h-2 rounded-full ${cat.color}`}></div>
-                                                                    <span className="text-slate-500 dark:text-slate-400">{cat.label}</span>
+                                                                    <span className="text-slate-400">{cat.label}</span>
                                                                 </div>
-                                                                <span className="text-slate-600 dark:text-slate-300 font-medium">{cat.pct}</span>
+                                                                <span className="text-slate-300 font-medium">{cat.pct}</span>
                                                             </div>
                                                         ))}
                                                     </div>
@@ -479,13 +458,13 @@
                                             </div>
 
                                             {/* Table */}
-                                            <div className="rounded-xl border border-black/5 dark:border-white/5 bg-slate-50 dark:bg-[#0F0F0F] overflow-hidden">
-                                                <div className="px-6 py-4 border-b border-black/5 dark:border-white/5 flex justify-between items-center">
-                                                    <div className="text-sm font-medium text-slate-900 dark:text-white">Recent Activity</div>
+                                            <div className="rounded-xl border border-white/5 bg-[#0F0F0F] overflow-hidden">
+                                                <div className="px-6 py-4 border-b border-white/5 flex justify-between items-center">
+                                                    <div className="text-sm font-medium text-white">Recent Activity</div>
                                                     <div className="text-xs text-primary-light cursor-pointer hover:text-primary transition-colors">View All</div>
                                                 </div>
                                                 <div className="w-full text-left">
-                                                    <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 border-b border-black/5 dark:border-white/5 px-6 py-3 flex">
+                                                    <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 border-b border-white/5 px-6 py-3 flex">
                                                         <div className="w-2/5">Issue</div>
                                                         <div className="w-1/5">Status</div>
                                                         <div className="w-1/5">Location</div>
@@ -494,12 +473,12 @@
                                                     {[
                                                         { issue: 'Pothole on Main St', id: '#ISS-824', status: 'Resolved', location: 'Downtown', time: '2m ago', sColor: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20' },
                                                         { issue: 'Streetlight Outage', id: '#ISS-823', status: 'In Progress', location: 'Westside', time: '1h ago', sColor: 'text-amber-400 bg-amber-400/10 border-amber-400/20' },
-                                                        { issue: 'Water Pipe Leak', id: '#ISS-822', status: 'Pending', location: 'North District', time: '3h ago', sColor: 'text-slate-500 dark:text-slate-400 bg-black/5 dark:bg-white/5 border-black/10 dark:border-white/10' },
+                                                        { issue: 'Water Pipe Leak', id: '#ISS-822', status: 'Pending', location: 'North District', time: '3h ago', sColor: 'text-slate-400 bg-white/5 border-white/10' },
                                                         { issue: 'Traffic Signal Malfunction', id: '#ISS-821', status: 'Resolved', location: 'East Blvd', time: '5h ago', sColor: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20' }
                                                     ].map((row, i) => (
-                                                        <div key={i} className="text-sm border-b border-black/5 dark:border-white/5 px-6 py-3.5 flex items-center hover:bg-black/[0.02] dark:bg-white/[0.02] transition-colors cursor-default">
+                                                        <div key={i} className="text-sm border-b border-white/5 px-6 py-3.5 flex items-center hover:bg-white/[0.02] transition-colors cursor-default">
                                                             <div className="w-2/5 flex flex-col gap-0.5">
-                                                                <span className="text-slate-700 dark:text-slate-200 font-medium">{row.issue}</span>
+                                                                <span className="text-slate-200 font-medium">{row.issue}</span>
                                                                 <span className="text-[10px] text-slate-500 font-mono">{row.id}</span>
                                                             </div>
                                                             <div className="w-1/5">
@@ -507,7 +486,7 @@
                                                                     {row.status}
                                                                 </span>
                                                             </div>
-                                                            <div className="w-1/5 text-slate-500 dark:text-slate-400 text-xs">{row.location}</div>
+                                                            <div className="w-1/5 text-slate-400 text-xs">{row.location}</div>
                                                             <div className="w-1/5 text-right text-slate-500 text-xs">{row.time}</div>
                                                         </div>
                                                     ))}
@@ -521,21 +500,21 @@
                     </main>
 
                     {/* SECTION 5 - FOOTER */}
-                    <footer className="border-t border-black/5 dark:border-white/5 bg-slate-50 dark:bg-dark-900 pt-16 pb-8 relative z-10 mt-12">
+                    <footer className="border-t border-white/5 bg-dark-900 pt-16 pb-8 relative z-10 mt-12">
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
                                 <div className="md:col-span-2">
                                     <div className="flex items-center gap-2 mb-4">
                                         <Layers className="text-primary-light" size={24} />
-                                        <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Complaint<span className="text-primary-light">IQ</span></span>
+                                        <span className="text-xl font-bold tracking-tight text-white">Complaint<span className="text-primary-light">IQ</span></span>
                                     </div>
-                                    <p className="text-slate-500 dark:text-slate-400 max-w-sm">
+                                    <p className="text-slate-400 max-w-sm">
                                         Building smarter, more responsive cities through predictive civic intelligence and transparent operations.
                                     </p>
                                 </div>
                                 <div>
-                                    <h4 className="text-slate-900 dark:text-white font-semibold mb-4">Platform</h4>
-                                    <ul className="space-y-2 text-slate-500 dark:text-slate-400">
+                                    <h4 className="text-white font-semibold mb-4">Platform</h4>
+                                    <ul className="space-y-2 text-slate-400">
                                         <li><a href="#" className="hover:text-primary-light transition-colors">Features</a></li>
                                         <li><a href="#" className="hover:text-primary-light transition-colors">Analytics</a></li>
                                         <li><a href="#" className="hover:text-primary-light transition-colors">Security</a></li>
@@ -543,20 +522,20 @@
                                     </ul>
                                 </div>
                                 <div>
-                                    <h4 className="text-slate-900 dark:text-white font-semibold mb-4">Legal</h4>
-                                    <ul className="space-y-2 text-slate-500 dark:text-slate-400">
+                                    <h4 className="text-white font-semibold mb-4">Legal</h4>
+                                    <ul className="space-y-2 text-slate-400">
                                         <li><a href="#" className="hover:text-primary-light transition-colors">Privacy Policy</a></li>
                                         <li><a href="#" className="hover:text-primary-light transition-colors">Terms of Service</a></li>
                                         <li><a href="#" className="hover:text-primary-light transition-colors">Contact</a></li>
                                     </ul>
                                 </div>
                             </div>
-                            <div className="border-t border-black/5 dark:border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-500">
+                            <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-500">
                                 <p>© 2026 ComplaintIQ. All rights reserved.</p>
                                 <div className="flex gap-4">
-                                    <a href="#" className="hover:text-slate-900 dark:text-white transition-colors">Twitter</a>
-                                    <a href="#" className="hover:text-slate-900 dark:text-white transition-colors">LinkedIn</a>
-                                    <a href="#" className="hover:text-slate-900 dark:text-white transition-colors">GitHub</a>
+                                    <a href="#" className="hover:text-white transition-colors">Twitter</a>
+                                    <a href="#" className="hover:text-white transition-colors">LinkedIn</a>
+                                    <a href="#" className="hover:text-white transition-colors">GitHub</a>
                                 </div>
                             </div>
                         </div>

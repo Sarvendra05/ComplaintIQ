@@ -266,50 +266,7 @@ function toggleMobileNav() {
 
 // Theme handling
 function initTheme() {
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-    if (savedTheme === 'dark') {
-        document.documentElement.classList.add('dark');
-    } else {
-        document.documentElement.classList.remove('dark');
-    }
-    updateThemeIcon();
-}
-
-function toggleTheme() {
-    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-    
-    document.documentElement.setAttribute('data-theme', newTheme);
-    if (newTheme === 'dark') {
-        document.documentElement.classList.add('dark');
-    } else {
-        document.documentElement.classList.remove('dark');
-    }
-    
-    localStorage.setItem('theme', newTheme);
-    
-    const icon = document.querySelector('.theme-toggle i');
-    if (icon) {
-        icon.style.transform = 'rotate(360deg) scale(0)';
-        icon.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
-        setTimeout(() => {
-            updateThemeIcon();
-            icon.style.transform = 'rotate(0deg) scale(1)';
-        }, 200);
-    } else {
-        updateThemeIcon();
-    }
-    
-    window.dispatchEvent(new CustomEvent('themeChanged', { detail: newTheme }));
-}
-
-function updateThemeIcon() {
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const btns = document.querySelectorAll('.theme-toggle i');
-    btns.forEach(btn => {
-        btn.className = isDark ? 'ph ph-sun' : 'ph ph-moon';
-    });
+    document.documentElement.setAttribute('data-theme', 'dark');
 }
 
 // ============================================
