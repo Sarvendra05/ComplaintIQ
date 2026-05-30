@@ -123,6 +123,11 @@ img, picture, video, canvas, svg {
     display: block;
 }
 
+html, body {
+    overflow-x: hidden;
+    max-width: 100%;
+}
+
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     background: var(--bg-main);
@@ -826,6 +831,7 @@ tbody tr:hover {
     width: 100%;
     max-width: 440px;
     box-shadow: var(--shadow-lg);
+    box-sizing: border-box;
 }
 
 .auth-card h2 {
@@ -1402,7 +1408,8 @@ tbody tr:hover {
 @media (max-width: 768px) {
     .sidebar {
         transform: translateX(-100%);
-        width: 260px;
+        width: 80% !important;
+        max-width: 320px;
         box-shadow: 0 0 30px rgba(15, 23, 42, 0.25);
     }
     .sidebar.open {
@@ -1418,10 +1425,44 @@ tbody tr:hover {
         grid-template-columns: 1fr;
     }
     .page-container {
-        padding: 16px 12px;
+        padding: 16px;
     }
     .topbar {
         padding: 0 16px;
+        gap: 8px;
+    }
+    .topbar-right {
+        gap: 8px;
+    }
+    .user-profile {
+        padding-left: 8px;
+        gap: 8px;
+    }
+    .user-name, .user-role {
+        max-width: 90px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .auth-card {
+        padding: 24px 16px;
+        margin: 0 16px;
+        height: auto;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .auth-footer {
+        word-wrap: break-word;
+        padding: 0 16px;
+    }
+    .btn-sm {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .sidebar-footer {
+        margin-top: auto;
     }
     .public-navbar {
         padding: 0 16px;
