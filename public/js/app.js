@@ -8,20 +8,24 @@ const API_BASE = '/api';
 // AUTH HELPERS
 // ============================================
 function getToken() {
-    return localStorage.getItem('token');
+    return sessionStorage.getItem('token');
 }
 
 function getUser() {
-    const user = localStorage.getItem('user');
+    const user = sessionStorage.getItem('user');
     return user ? JSON.parse(user) : null;
 }
 
 function setAuth(token, user) {
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(user));
+    sessionStorage.setItem('token', token);
+    sessionStorage.setItem('user', JSON.stringify(user));
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
 }
 
 function clearAuth() {
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
     localStorage.removeItem('token');
     localStorage.removeItem('user');
 }
@@ -190,8 +194,10 @@ function renderTopbar(title = 'Dashboard') {
     const topbar = document.getElementById('topbar');
     if (!topbar) return;
 
+    const isPublicAuthPage = window.location.pathname.includes('login') || window.location.pathname.includes('register') || window.location.pathname === '/' || window.location.pathname.includes('index');
+
     let userInfo = '';
-    if (user) {
+    if (user && !isPublicAuthPage) {
         userInfo = `
             <div class="user-profile">
                 <div class="user-info" style="text-align: right;">
@@ -459,11 +465,23 @@ function initScrollAnimations() {
 
 // Initialize on all pages
 document.addEventListener('DOMContentLoaded', () => {
+    const path = window.location.pathname;
+    
+    // Auto redirect if already logged in on auth/public pages
+    if (path.includes('login') || path.includes('register') || path === '/' || path.includes('index')) {
+        const user = getUser();
+        if (user) {
+            if (user.role === 'citizen') window.location.href = '/my-complaints.html';
+            else if (user.role === 'admin') window.location.href = '/admin-dashboard.html';
+            else if (user.role === 'department') window.location.href = '/dept-dashboard.html';
+            return;
+        }
+    }
+
     initTheme();
     renderSidebar();
     
     let title = 'Dashboard';
-    const path = window.location.pathname;
     if (path.includes('hotspots')) title = 'Hotspot Detection';
     else if (path.includes('performance')) title = 'Performance Report';
     else if (path.includes('my-complaints')) title = 'My Complaints';

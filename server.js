@@ -34,9 +34,27 @@ app.use('/api/admin', require('./routes/admin'));
 app.use('/api/dept', require('./routes/department'));
 app.use('/api/areas', require('./routes/areas'));
 
-// Catch-all: serve index.html for any non-API route
+// Catch-all: handle clean URLs and serve index.html
 app.get('*', (req, res) => {
     if (!req.path.startsWith('/api')) {
+        const pathName = req.path;
+        
+        // Redirect protected clean URLs to their HTML counterparts
+        if (pathName === '/admin' || pathName === '/dashboard' || pathName === '/admin-dashboard') {
+            return res.redirect('/admin-dashboard.html');
+        }
+        if (pathName === '/citizen' || pathName === '/my-complaints') {
+            return res.redirect('/my-complaints.html');
+        }
+        if (pathName === '/department' || pathName === '/dept-dashboard') {
+            return res.redirect('/dept-dashboard.html');
+        }
+        
+        // Redirect any unknown path that isn't a file request to the home page
+        if (pathName !== '/' && !pathName.includes('.')) {
+            return res.redirect('/');
+        }
+        
         res.sendFile(path.join(__dirname, 'public', 'index.html'));
     }
 });
