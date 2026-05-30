@@ -239,9 +239,6 @@ function renderTopbar(title = 'Dashboard') {
         </div>
         ` : ''}
         <div class="topbar-right" style="flex:1; justify-content:flex-end;">
-            <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme">
-                <i class="ph ph-moon"></i>
-            </button>
             ${user ? `<button class="notification-bell"><i class="ph ph-bell"></i></button>` : ''}
             ${userInfo}
         </div>
@@ -269,15 +266,27 @@ function toggleMobileNav() {
 
 // Theme handling
 function initTheme() {
-    const savedTheme = localStorage.getItem('theme') || 'light';
+    const savedTheme = localStorage.getItem('theme') || 'dark';
     document.documentElement.setAttribute('data-theme', savedTheme);
+    if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+    } else {
+        document.documentElement.classList.remove('dark');
+    }
     updateThemeIcon();
 }
 
 function toggleTheme() {
-    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
     const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+    
     document.documentElement.setAttribute('data-theme', newTheme);
+    if (newTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+    } else {
+        document.documentElement.classList.remove('dark');
+    }
+    
     localStorage.setItem('theme', newTheme);
     
     const icon = document.querySelector('.theme-toggle i');
@@ -291,14 +300,16 @@ function toggleTheme() {
     } else {
         updateThemeIcon();
     }
+    
+    window.dispatchEvent(new CustomEvent('themeChanged', { detail: newTheme }));
 }
 
 function updateThemeIcon() {
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const btn = document.querySelector('.theme-toggle i');
-    if (btn) {
+    const btns = document.querySelectorAll('.theme-toggle i');
+    btns.forEach(btn => {
         btn.className = isDark ? 'ph ph-sun' : 'ph ph-moon';
-    }
+    });
 }
 
 // ============================================
