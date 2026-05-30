@@ -209,23 +209,25 @@ function renderTopbar(title = 'Dashboard') {
         `;
     } else {
         userInfo = `
-            <div class="user-profile" style="border:none;">
-                <a href="/login.html" class="btn btn-outline btn-sm">Sign In</a>
-                <a href="/register.html" class="btn btn-primary btn-sm" style="margin-left: 8px;">Register</a>
+            <div class="user-profile auth-buttons" style="border:none;">
+                <a href="/login.html" class="btn btn-outline btn-sm auth-btn-login">Sign In</a>
+                <a href="/register.html" class="btn btn-primary btn-sm auth-btn-register">Register</a>
             </div>
         `;
     }
 
     topbar.innerHTML = `
         <div class="topbar-left" style="flex:1;">
+            ${!isPublicAuthPage ? `
             <button class="mobile-menu-btn" onclick="toggleMobileNav()">
                 <i class="ph ph-list"></i>
             </button>
-            <a href="/" class="page-title" style="display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:inherit;">
-                <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#4F46E5,#818cf8);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(79,70,229,0.25);">
-                    <i class="ph-fill ph-shield-check" style="color:#fff;font-size:18px;"></i>
+            ` : ''}
+            <a href="/" class="brand-logo">
+                <div class="brand-icon-box">
+                    <i class="ph-fill ph-shield-check"></i>
                 </div>
-                <span style="font-size:1.18rem;font-weight:700;letter-spacing:-0.02em;">Complaint<span style="color:#818cf8;">IQ</span></span>
+                <span class="brand-text-bold">Complaint<span>IQ</span></span>
             </a>
         </div>
         ${title === 'Dashboard' ? `

@@ -349,6 +349,34 @@ a:hover {
     margin: 0;
 }
 
+.brand-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: inherit;
+}
+.brand-icon-box {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #4F46E5, #818cf8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
+    color: #fff;
+    font-size: 18px;
+}
+.brand-text-bold {
+    font-size: 1.18rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+.brand-text-bold span {
+    color: #818cf8;
+}
+
 .topbar-right {
     display: flex;
     align-items: center;
@@ -1579,6 +1607,33 @@ tbody tr:hover {
     }
     .chart-header select, .chart-header button {
         width: 100%;
+    }
+    
+    /* Mobile Header Cleanup */
+    .brand-logo {
+        gap: 6px;
+    }
+    .brand-icon-box {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        font-size: 16px;
+    }
+    .brand-text-bold {
+        font-size: 1rem;
+    }
+    .topbar {
+        padding: 0 12px;
+    }
+    .user-profile.auth-buttons {
+        gap: 6px;
+        padding-left: 0;
+    }
+    .auth-buttons .btn-sm {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+        min-height: 36px;
+        white-space: nowrap;
     }
 }
 
