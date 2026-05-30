@@ -115,16 +115,16 @@
             <div class="card">
                 <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
                     <span class="card-title">Complaint History</span>
-                    <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
-                        <input type="text" id="searchBar" class="form-control" placeholder="Search complaints..." style="width:200px; padding:6px 12px; font-size:0.85rem;" oninput="filterComplaintsList()">
-                        <select id="filterStatus" class="form-control" style="width:130px; padding:6px 12px; font-size:0.85rem;" onchange="filterComplaintsList()">
+                    <div class="filters-bar" style="margin-bottom: 0; padding: 0; background: transparent; border: none; box-shadow: none; width: 100%;">
+                        <input type="text" id="searchBar" class="form-control" placeholder="Search complaints..." style="padding:6px 12px; font-size:0.85rem;" oninput="filterComplaintsList()">
+                        <select id="filterStatus" class="form-control" style="padding:6px 12px; font-size:0.85rem;" onchange="filterComplaintsList()">
                             <option value="">All Status</option>
                             <option value="Pending">Pending</option>
                             <option value="In Progress">In Progress</option>
                             <option value="Resolved">Resolved</option>
                             <option value="Escalated">Escalated</option>
                         </select>
-                        <select id="filterCategory" class="form-control" style="width:130px; padding:6px 12px; font-size:0.85rem;" onchange="filterComplaintsList()">
+                        <select id="filterCategory" class="form-control" style="padding:6px 12px; font-size:0.85rem;" onchange="filterComplaintsList()">
                             <option value="">All Categories</option>
                             <option value="Road">Road</option>
                             <option value="Water">Water</option>
@@ -144,7 +144,7 @@
     </div>
     <!-- Edit Complaint Modal -->
     <div class="modal-overlay" id="editModal" onclick="if(event.target === this) closeEditModal()">
-        <div class="modal" style="max-width: 600px;">
+        <div class="modal" style="width: 100%; max-width: 600px;">
             <div class="modal-header">
                 <span class="modal-title">✏️ Edit Complaint</span>
                 <button class="modal-close" onclick="closeEditModal()">&times;</button>
@@ -203,7 +203,7 @@
 
     <!-- Reopen Modal -->
     <div class="modal-overlay" id="reopenModal" onclick="if(event.target === this) closeReopenModal()">
-        <div class="modal" style="max-width: 500px;">
+        <div class="modal" style="width: 100%; max-width: 500px;">
             <div class="modal-header">
                 <span class="modal-title" style="display: flex; align-items: center; gap: 10px;">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:20px; height:20px;">
@@ -264,7 +264,7 @@
 
     <!-- Unified Details & Timeline Modal -->
     <div class="modal-overlay" id="detailsModal" onclick="if(event.target === this) closeDetailsModal()">
-        <div class="modal" style="max-width: 800px;">
+        <div class="modal" style="width: 100%; max-width: 800px;">
             <div class="modal-header">
                 <span class="modal-title" style="display:flex; align-items:center; gap:8px;">
                     📜 Complaint Details & Activity
@@ -279,7 +279,7 @@
 
     <!-- Add Proof Modal -->
     <div class="modal-overlay" id="addProofModal" onclick="if(event.target === this) closeAddProofModal()">
-        <div class="modal" style="max-width: 450px;">
+        <div class="modal" style="width: 100%; max-width: 450px;">
             <div class="modal-header">
                 <span class="modal-title" style="display: flex; align-items: center; gap: 10px;">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:20px; height:20px;">
@@ -308,7 +308,7 @@
 
     <!-- Image Modal -->
     <div class="modal-overlay" id="imageModal" onclick="if(event.target === this) closeImageModal()">
-        <div class="modal" style="max-width: 800px;">
+        <div class="modal" style="width: 100%; max-width: 800px;">
             <div class="modal-header">
                 <span class="modal-title" id="imageModalTitle">Complaint Proof</span>
                 <button class="modal-close" onclick="closeImageModal()">&times;</button>
