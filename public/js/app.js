@@ -504,10 +504,12 @@ document.addEventListener('DOMContentLoaded', () => {
     
     renderTopbar(title);
     
-    // Stagger slide-in animations for nav links
-    document.querySelectorAll('.sidebar-nav .nav-item').forEach((item, idx) => {
-        item.style.animation = `fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards`;
-        item.style.animationDelay = `${idx * 0.06}s`;
+    // Unified fade-in for ALL sidebar nav items (nav links + Sign Out).
+    // No per-item stagger delay — everything renders as a single unit so Sign Out
+    // never appears later or separately from the rest of the sidebar content.
+    document.querySelectorAll('.sidebar .nav-item').forEach((item) => {
+        item.style.animation = `fadeInUp 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards`;
+        item.style.animationDelay = '0s';
         item.style.opacity = '0';
     });
 
