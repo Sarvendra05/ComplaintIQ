@@ -16,6 +16,172 @@
     
     <!-- Leaflet Heatmap Plugin -->
     <script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+
+    <style>
+        /* ── Desktop: full-screen GIS layout ── */
+
+        /* IMPORTANT: This rule must stay BEFORE the @media block so that the
+           mobile @media rule `display: flex` can correctly override it.       */
+        .filter-toggle-btn { display: none; }
+        .filter-desktop-heading { display: block; }
+
+        .full-map-wrapper {
+            position: relative;
+            width: 100%;
+        }
+        .full-map-container {
+            width: 100%;
+            height: 72vh;
+            min-height: 420px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+            overflow: hidden;
+            z-index: 0;
+        }
+        .map-filter-overlay {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 280px;
+            max-height: calc(72vh - 32px);
+            overflow-y: auto;
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 18px;
+            z-index: 800;
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* ── Mobile overrides (≤768px) ── */
+        @media (max-width: 768px) {
+            /* Map shrinks to 37vh - compact but still useful */
+            .full-map-container {
+                height: 37vh;
+                min-height: 200px;
+                border-radius: var(--radius-md);
+                margin: 0;
+            }
+
+            /* Wrapper must NOT clip overflow so the filter panel can sit below */
+            .full-map-wrapper {
+                /* Reset any inherited overflow:hidden from styles.css */
+                overflow: visible !important;
+                height: auto !important;
+                border-radius: 0;
+                border: none;
+                box-shadow: none;
+            }
+
+            /* Filter panel drops below the map, no longer overlapping */
+            .map-filter-overlay {
+                position: static;
+                width: 100%;
+                max-height: none;
+                max-width: 100%;
+                border-radius: var(--radius-md);
+                padding: 12px 14px;
+                margin-top: 10px;
+                box-sizing: border-box;
+                box-shadow: var(--shadow-sm);
+                /* Ensure z-index doesn't block anything below */
+                z-index: auto;
+            }
+
+            /* Tighten page header on mobile */
+            .page-header {
+                margin-bottom: 8px !important;
+            }
+            .page-header .page-subtitle {
+                font-size: 0.78rem;
+                line-height: 1.4;
+            }
+
+            /* Show collapse toggle button; hide desktop heading */
+            .filter-toggle-btn {
+                display: flex !important;
+                align-items: center;
+                justify-content: space-between;
+                width: 100%;
+                background: none;
+                border: none;
+                color: var(--text-primary);
+                font-size: 0.92rem;
+                font-weight: 700;
+                padding: 2px 0;
+                cursor: pointer;
+                min-height: 36px;
+            }
+            .filter-desktop-heading {
+                display: none !important;
+            }
+            .filter-toggle-btn .filter-caret {
+                transition: transform 0.25s;
+                font-size: 1rem;
+                flex-shrink: 0;
+            }
+            .filter-toggle-btn.collapsed .filter-caret {
+                transform: rotate(-90deg);
+            }
+
+            /* Smooth accordion for filter body */
+            .filter-body {
+                overflow: hidden;
+                transition: max-height 0.3s ease;
+                max-height: 600px;
+            }
+            .filter-body.collapsed {
+                max-height: 0 !important;
+            }
+
+            /* Compact form groups */
+            .map-filter-overlay .form-group {
+                margin-bottom: 8px !important;
+            }
+            .map-filter-overlay .form-control {
+                padding: 6px 10px !important;
+                font-size: 0.82rem !important;
+                min-height: 36px;
+            }
+            .map-filter-overlay .form-label {
+                font-size: 0.7rem !important;
+                margin-bottom: 3px;
+                display: block;
+            }
+
+            /* Compact heatmap toggle box */
+            .map-filter-overlay .heatmap-toggle-box {
+                padding: 8px 10px !important;
+                margin-bottom: 10px !important;
+            }
+
+            /* Stats grid: stays 2-col but compact */
+            .map-stats-grid {
+                gap: 6px !important;
+            }
+            .map-stats-grid > div {
+                padding: 7px 8px !important;
+            }
+            .map-stats-grid .stat-num {
+                font-size: 1.1rem !important;
+            }
+
+            /* Prevent horizontal overflow across the whole page */
+            .full-map-wrapper,
+            .page-container {
+                overflow-x: hidden;
+                max-width: 100%;
+                box-sizing: border-box;
+            }
+
+            /* Reduce page-container padding on mobile */
+            .hotspot-page-container {
+                padding: 12px 12px 24px !important;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="app-layout">
@@ -24,7 +190,7 @@
         <div class="main-content">
             <header class="topbar" id="topbar"></header>
             
-            <div class="page-container" style="padding: 24px;">
+            <div class="page-container hotspot-page-container" style="padding: 24px;">
                 <div class="page-header" style="margin-bottom: 16px;">
                     <h1 class="page-title"><i class="ph ph-map-pin"></i> Geospatial Hotspot Detection</h1>
                     <p class="page-subtitle">Real-time smart-city GIS dashboard. Track incident distribution, clusters, and priority clusters</p>
@@ -37,72 +203,80 @@
                     
                     <!-- Floating GIS Filters Panel -->
                     <div class="map-filter-overlay">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1px solid var(--border); padding-bottom:12px;">
-                            <h3 style="margin:0; font-size:1.05rem; font-weight:700;">📡 GIS Command Panel</h3>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; border-bottom:1px solid var(--border); padding-bottom:10px;">
+                            <!-- Mobile collapse toggle (hidden on desktop via CSS) -->
+                            <button class="filter-toggle-btn" id="filterToggleBtn" onclick="toggleFilterPanel()" aria-expanded="true">
+                                <span>📡 GIS Command Panel</span>
+                                <i class="ph ph-caret-down filter-caret"></i>
+                            </button>
+                            <!-- Desktop heading (hidden on mobile) -->
+                            <h3 class="filter-desktop-heading" style="margin:0; font-size:1.05rem; font-weight:700;">📡 GIS Command Panel</h3>
                             <span class="badge" style="background:rgba(99,102,241,0.1); color:var(--primary); font-size:0.7rem; font-weight:700;">LIVE</span>
                         </div>
-                        
-                        <!-- Search Box -->
-                        <div class="form-group" style="margin-bottom:16px;">
-                            <label class="form-label" style="font-size:0.75rem; color:var(--text-secondary);">Query Search</label>
-                            <input type="text" id="mapSearch" class="form-control" placeholder="Search complaints..." style="padding:6px 12px; font-size:0.85rem;" oninput="applyMapFilters()">
-                        </div>
 
-                        <!-- Category Filter -->
-                        <div class="form-group" style="margin-bottom:16px;">
-                            <label class="form-label" style="font-size:0.75rem; color:var(--text-secondary);">Filter Category</label>
-                            <select id="mapCategory" class="form-control" style="padding:6px 12px; font-size:0.85rem;" onchange="applyMapFilters()">
-                                <option value="">All Categories</option>
-                                <option value="Road">Road</option>
-                                <option value="Water">Water</option>
-                                <option value="Garbage">Garbage</option>
-                                <option value="Light">Light</option>
-                                <option value="Drainage">Drainage</option>
-                                <option value="Other">Other</option>
-                            </select>
-                        </div>
+                        <div class="filter-body" id="filterBody">
+                            <!-- Search Box -->
+                            <div class="form-group" style="margin-bottom:16px;">
+                                <label class="form-label" style="font-size:0.75rem; color:var(--text-secondary);">Query Search</label>
+                                <input type="text" id="mapSearch" class="form-control" placeholder="Search complaints..." style="padding:6px 12px; font-size:0.85rem;" oninput="applyMapFilters()">
+                            </div>
 
-                        <!-- Status Filter -->
-                        <div class="form-group" style="margin-bottom:16px;">
-                            <label class="form-label" style="font-size:0.75rem; color:var(--text-secondary);">Filter Status</label>
-                            <select id="mapStatus" class="form-control" style="padding:6px 12px; font-size:0.85rem;" onchange="applyMapFilters()">
-                                <option value="">All Statuses</option>
-                                <option value="Pending">Pending</option>
-                                <option value="In Progress">In Progress</option>
-                                <option value="Resolved">Resolved</option>
-                                <option value="Escalated">Escalated</option>
-                            </select>
-                        </div>
+                            <!-- Category Filter -->
+                            <div class="form-group" style="margin-bottom:16px;">
+                                <label class="form-label" style="font-size:0.75rem; color:var(--text-secondary);">Filter Category</label>
+                                <select id="mapCategory" class="form-control" style="padding:6px 12px; font-size:0.85rem;" onchange="applyMapFilters()">
+                                    <option value="">All Categories</option>
+                                    <option value="Road">Road</option>
+                                    <option value="Water">Water</option>
+                                    <option value="Garbage">Garbage</option>
+                                    <option value="Light">Light</option>
+                                    <option value="Drainage">Drainage</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
 
-                        <!-- Visualization Toggles -->
-                        <div class="form-group" style="margin-bottom:20px; background:var(--bg-main); padding:12px; border-radius:var(--radius-md); border:1px solid var(--border);">
-                            <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-size:0.85rem; font-weight:600; color:var(--text-primary);">
-                                <span><i class="ph ph-fire"></i> Density Heatmap</span>
-                                <input type="checkbox" id="heatmapToggle" style="width:16px; height:16px;" onchange="toggleHeatmap()">
-                            </label>
-                            <p style="margin:4px 0 0 0; font-size:0.75rem; color:var(--text-secondary);">Overlay relative density density cluster values.</p>
-                        </div>
+                            <!-- Status Filter -->
+                            <div class="form-group" style="margin-bottom:16px;">
+                                <label class="form-label" style="font-size:0.75rem; color:var(--text-secondary);">Filter Status</label>
+                                <select id="mapStatus" class="form-control" style="padding:6px 12px; font-size:0.85rem;" onchange="applyMapFilters()">
+                                    <option value="">All Statuses</option>
+                                    <option value="Pending">Pending</option>
+                                    <option value="In Progress">In Progress</option>
+                                    <option value="Resolved">Resolved</option>
+                                    <option value="Escalated">Escalated</option>
+                                </select>
+                            </div>
 
-                        <!-- Real-time GIS Statistics -->
-                        <div style="border-top:1px solid var(--border); padding-top:16px;">
-                            <h4 style="margin-bottom:12px; font-size:0.85rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-secondary);">Command Intel</h4>
-                            
-                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-                                <div style="background:var(--bg-main); padding:10px; border-radius:var(--radius-md); border:1px solid var(--border); text-align:center;">
-                                    <div style="font-size:1.3rem; font-weight:800; color:var(--primary);" id="activeMarkers">0</div>
-                                    <div style="font-size:0.65rem; color:var(--text-secondary); text-transform:uppercase;">Plotted</div>
+                            <!-- Visualization Toggles -->
+                            <div class="form-group heatmap-toggle-box" style="margin-bottom:16px; background:var(--bg-main); padding:12px; border-radius:var(--radius-md); border:1px solid var(--border);">
+                                <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-size:0.85rem; font-weight:600; color:var(--text-primary);">
+                                    <span><i class="ph ph-fire"></i> Density Heatmap</span>
+                                    <input type="checkbox" id="heatmapToggle" style="width:16px; height:16px;" onchange="toggleHeatmap()">
+                                </label>
+                                <p style="margin:4px 0 0 0; font-size:0.75rem; color:var(--text-secondary);">Overlay relative density cluster values.</p>
+                            </div>
+
+                            <!-- Real-time GIS Statistics -->
+                            <div style="border-top:1px solid var(--border); padding-top:16px;">
+                                <h4 style="margin-bottom:12px; font-size:0.85rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-secondary);">Command Intel</h4>
+                                
+                                <div class="map-stats-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                                    <div style="background:var(--bg-main); padding:10px; border-radius:var(--radius-md); border:1px solid var(--border); text-align:center;">
+                                        <div class="stat-num" style="font-size:1.3rem; font-weight:800; color:var(--primary);" id="activeMarkers">0</div>
+                                        <div style="font-size:0.65rem; color:var(--text-secondary); text-transform:uppercase;">Plotted</div>
+                                    </div>
+                                    <div style="background:var(--bg-main); padding:10px; border-radius:var(--radius-md); border:1px solid var(--border); text-align:center;">
+                                        <div class="stat-num" style="font-size:1.3rem; font-weight:800; color:var(--danger);" id="escalatedCount">0</div>
+                                        <div style="font-size:0.65rem; color:var(--text-secondary); text-transform:uppercase;">Escalated</div>
+                                    </div>
                                 </div>
-                                <div style="background:var(--bg-main); padding:10px; border-radius:var(--radius-md); border:1px solid var(--border); text-align:center;">
-                                    <div style="font-size:1.3rem; font-weight:800; color:var(--danger);" id="escalatedCount">0</div>
-                                    <div style="font-size:0.65rem; color:var(--text-secondary); text-transform:uppercase;">Escalated</div>
+                                
+                                <div style="background:var(--bg-main); padding:10px; border-radius:var(--radius-md); border:1px solid var(--border); text-align:center; margin-top:10px;">
+                                    <div style="font-size:0.85rem; font-weight:700; color:var(--text-primary); word-break:break-word;" id="highestZone">—</div>
+                                    <div style="font-size:0.65rem; color:var(--text-secondary); text-transform:uppercase;">Highest Incident Zone</div>
                                 </div>
                             </div>
-                            
-                            <div style="background:var(--bg-main); padding:10px; border-radius:var(--radius-md); border:1px solid var(--border); text-align:center; margin-top:12px;">
-                                <div style="font-size:0.9rem; font-weight:700; color:var(--text-primary);" id="highestZone">—</div>
-                                <div style="font-size:0.65rem; color:var(--text-secondary); text-transform:uppercase;">Highest Incident Zone</div>
-                            </div>
-                        </div>
+                        </div><!-- /filter-body -->
                     </div>
                 </div>
             </div>
@@ -138,9 +312,43 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             if (!requireAuth(['admin'])) return;
+
+            // ── Sidebar glitch fix: forcibly reset ALL sidebar/overlay state ──
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar) sidebar.classList.remove('open');
+
+            // Remove ALL stale overlay elements from the DOM (not just hide them)
+            document.querySelectorAll('.sidebar-overlay').forEach(el => el.remove());
+
+            // Unlock body scroll (in case it was locked by a previous sidebar open)
+            document.body.style.overflow = '';
+            document.body.style.overflowY = '';
+            document.documentElement.style.overflow = '';
+
+            // ── Mobile: start with filter panel collapsed ──
+            const isMobile = window.innerWidth <= 768;
+            if (isMobile) {
+                toggleFilterPanel(true); // pass true = force-collapsed
+            }
+
+            // ── Invalidate map size after Leaflet initialises ──
             initMap();
             loadMapData();
+            setTimeout(() => { if (map) map.invalidateSize(); }, 300);
         });
+
+        // ── Accordion toggle for the mobile filter panel ──
+        function toggleFilterPanel(forceCollapse) {
+            const btn  = document.getElementById('filterToggleBtn');
+            const body = document.getElementById('filterBody');
+            if (!btn || !body) return;
+
+            const willCollapse = (forceCollapse === true) ? true : !body.classList.contains('collapsed');
+
+            body.classList.toggle('collapsed', willCollapse);
+            btn.classList.toggle('collapsed', willCollapse);
+            btn.setAttribute('aria-expanded', String(!willCollapse));
+        }
 
         function initMap() {
             // Initialize Leaflet Map centered on Uttar Pradesh

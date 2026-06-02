@@ -1578,6 +1578,24 @@ tbody tr:hover {
     .map-container {
         height: 300px;
     }
+
+    /* Full-page GIS map wrapper: stack vertically on mobile */
+    .full-map-wrapper {
+        height: auto !important;       /* override the calc(100vh - ...) desktop rule */
+        overflow: visible !important;  /* let the filter panel flow below the map     */
+        border-radius: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+    /* The overlay panel becomes a normal block below the map */
+    .map-filter-overlay {
+        position: static !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        max-height: none !important;
+        margin-top: 10px;
+        box-sizing: border-box;
+    }
     
     /* Forms */
     .form-row {

@@ -186,6 +186,12 @@ function renderSidebar() {
         if (link.getAttribute('href') === currentPath) {
             link.classList.add('active');
         }
+        // Auto-close mobile sidebar when any nav link is tapped
+        link.addEventListener('click', () => {
+            if (window.innerWidth <= 768) {
+                closeMobileNav();
+            }
+        });
     });
 }
 
@@ -245,23 +251,49 @@ function renderTopbar(title = 'Dashboard') {
     `;
 }
 
+/**
+ * Close the mobile sidebar and REMOVE the backdrop overlay from the DOM.
+ * This prevents stale overlay nodes from persisting across page navigations.
+ */
+function closeMobileNav() {
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar) sidebar.classList.remove('open');
+
+    // Remove ALL overlay nodes (there should only ever be one, but clean up any duplicates)
+    document.querySelectorAll('.sidebar-overlay').forEach(el => el.remove());
+
+    // Always restore body/html scroll
+    document.body.style.overflow = '';
+    document.body.style.overflowY = '';
+    document.documentElement.style.overflow = '';
+}
+
 function toggleMobileNav() {
     const sidebar = document.getElementById('sidebar');
     if (!sidebar) return;
-    
-    let overlay = document.querySelector('.sidebar-overlay');
-    if (!overlay) {
-        overlay = document.createElement('div');
-        overlay.className = 'sidebar-overlay';
-        document.body.appendChild(overlay);
-        overlay.addEventListener('click', () => {
-            sidebar.classList.remove('open');
-            overlay.classList.remove('active');
-        });
+
+    const isOpen = sidebar.classList.contains('open');
+
+    if (isOpen) {
+        // Close: remove the overlay entirely
+        closeMobileNav();
+    } else {
+        // Open: create a fresh overlay each time
+        sidebar.classList.add('open');
+
+        let overlay = document.querySelector('.sidebar-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.className = 'sidebar-overlay';
+            document.body.appendChild(overlay);
+        }
+        // Activate overlay (CSS transitions opacity from 0 → 1)
+        // Use rAF to ensure the element is in the DOM before animating
+        requestAnimationFrame(() => overlay.classList.add('active'));
+
+        // Clicking backdrop closes the drawer
+        overlay.addEventListener('click', closeMobileNav, { once: true });
     }
-    
-    sidebar.classList.toggle('open');
-    overlay.classList.toggle('active', sidebar.classList.contains('open'));
 }
 
 // Theme handling
@@ -436,7 +468,19 @@ function initScrollAnimations() {
 // Initialize on all pages
 document.addEventListener('DOMContentLoaded', () => {
     const path = window.location.pathname;
-    
+
+    // ── Global sidebar/overlay reset on every page load ──────────────────────
+    // Handles the back-navigation glitch: if the user navigated FROM a page
+    // while the mobile sidebar was open, the overlay node may still be in the
+    // DOM (different pages share the same browser session). Wipe it here.
+    document.querySelectorAll('.sidebar-overlay').forEach(el => el.remove());
+    document.body.style.overflow = '';
+    document.body.style.overflowY = '';
+    document.documentElement.style.overflow = '';
+    const _sb = document.getElementById('sidebar');
+    if (_sb) _sb.classList.remove('open');
+    // ─────────────────────────────────────────────────────────────────────────
+
     // Auto redirect if already logged in on auth/public pages
     if (path.includes('login') || path.includes('register') || path === '/' || path.includes('index')) {
         const user = getUser();
